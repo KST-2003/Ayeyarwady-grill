@@ -1,0 +1,54 @@
+{
+    "name": "ayeyarwady-grill/backend-laravel",
+    "type": "project",
+    "description": "Ayeyarwady Grill — Hybrid Restaurant Booking & QR Ordering System (Laravel API backend)",
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^11.9",
+        "laravel/sanctum": "^4.0",
+        "laravel/reverb": "^1.0",
+        "simplesoftwareio/simple-qrcode": "^4.2"
+    },
+    "require-dev": {
+        "fakerphp/faker": "^1.23",
+        "laravel/pint": "^1.13",
+        "laravel/tinker": "^2.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": []
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true
+        },
+        "audit": {
+            "block-insecure": false
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
