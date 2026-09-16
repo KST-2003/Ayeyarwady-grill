@@ -217,22 +217,22 @@ export default function LandingPage() {
         <div className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-4 sm:grid-cols-3 sm:grid-rows-2">
           <Reveal className="sm:col-span-2 sm:row-span-2">
             <img
-              src="https://picsum.photos/seed/riverside-dining/900/900"
-              alt="Riverside dining at Ayeyarwady Grill"
+              src="/images/gallery-riverfront-aerial.jpg"
+              alt="Aerial view of Ayeyarwady Grill's riverfront terrace at night"
               className="h-full max-h-[560px] w-full rounded-xl object-cover"
             />
           </Reveal>
           <Reveal delayMs={100}>
             <img
-              src="https://picsum.photos/seed/charcoal-flame/600/400"
-              alt="Charcoal grill flame"
+              src="/images/gallery-interior.jpg"
+              alt="Ayeyarwady Grill's dining room with tabletop grills"
               className="h-64 w-full rounded-xl object-cover sm:h-full"
             />
           </Reveal>
           <Reveal delayMs={200}>
             <img
-              src="https://picsum.photos/seed/yangon-river-sunset/600/400"
-              alt="Sunset over the Yangon River"
+              src="/images/gallery-riverside-night.jpg"
+              alt="Riverside dining at night with the Yangon skyline"
               className="h-64 w-full rounded-xl object-cover sm:h-full"
             />
           </Reveal>
