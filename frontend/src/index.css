@@ -21,3 +21,28 @@ body {
 .animate-step {
   animation: step-fade-in 0.35s ease-out;
 }
+
+/* Scroll-reveal — an element fades/slides in the first time it enters the
+   viewport (see components/Reveal.tsx, which toggles .is-visible via
+   IntersectionObserver). Starts hidden so it doesn't flash unstyled before
+   JS attaches; reduced-motion users get the final state immediately with
+   no animation, never a permanently-hidden element. */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+  will-change: opacity, transform;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+}

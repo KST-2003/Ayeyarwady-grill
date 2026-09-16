@@ -13,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import Navbar from "../components/Navbar";
+import Reveal from "../components/Reveal";
 import api from "../lib/api";
 
 interface MenuItemImage {
@@ -87,67 +88,79 @@ export default function LandingPage() {
 
       {/* Our Story */}
       <section id="story" className="bg-grill-brown-dark px-6 py-24 text-center text-white">
-        <p className="text-sm font-semibold tracking-[0.2em] text-grill-orange">
-          OUR STORY
-        </p>
-        <h2 className="mx-auto mt-4 max-w-2xl font-display text-5xl leading-tight">
-          Where the River Meets the Grill
-        </h2>
-        <p className="mx-auto mt-6 max-w-2xl text-white/60">
-          Perched on Yangon's Botahtaung waterfront, Ayeyarwady Grill is a
-          30-table open-air BBQ restaurant where the city's Gen Z foodies,
-          young professionals, and curious travellers come together over
-          sizzling platters of locally-sourced seafood and premium meats —
-          all grilled to order over roaring charcoal flames, with the Yangon
-          River as your backdrop.
-        </p>
+        <Reveal>
+          <p className="text-sm font-semibold tracking-[0.2em] text-grill-orange">
+            OUR STORY
+          </p>
+          <h2 className="mx-auto mt-4 max-w-2xl font-display text-5xl leading-tight">
+            Where the River Meets the Grill
+          </h2>
+          <p className="mx-auto mt-6 max-w-2xl text-white/60">
+            Perched on Yangon's Botahtaung waterfront, Ayeyarwady Grill is a
+            30-table open-air BBQ restaurant where the city's Gen Z foodies,
+            young professionals, and curious travellers come together over
+            sizzling platters of locally-sourced seafood and premium meats —
+            all grilled to order over roaring charcoal flames, with the Yangon
+            River as your backdrop.
+          </p>
+        </Reveal>
 
         <div className="mx-auto mt-14 grid max-w-4xl gap-6 md:grid-cols-3">
-          <StoryCard icon={<Flame className="h-6 w-6" />} title="Open Flame BBQ" subtitle="Charcoal-grilled perfection" />
-          <StoryCard icon={<Anchor className="h-6 w-6" />} title="Riverfront Views" subtitle="30 tables on the water" />
-          <StoryCard icon={<Users className="h-6 w-6" />} title="Social Dining" subtitle="Built for sharing" />
+          <Reveal delayMs={0}>
+            <StoryCard icon={<Flame className="h-6 w-6" />} title="Open Flame BBQ" subtitle="Charcoal-grilled perfection" />
+          </Reveal>
+          <Reveal delayMs={100}>
+            <StoryCard icon={<Anchor className="h-6 w-6" />} title="Riverfront Views" subtitle="30 tables on the water" />
+          </Reveal>
+          <Reveal delayMs={200}>
+            <StoryCard icon={<Users className="h-6 w-6" />} title="Social Dining" subtitle="Built for sharing" />
+          </Reveal>
         </div>
       </section>
 
       {/* Menu */}
       <section id="menu" className="bg-grill-brown px-6 py-24 text-center text-white">
-        <p className="text-sm font-semibold tracking-[0.2em] text-grill-orange">
-          THE MENU
-        </p>
-        <h2 className="mt-4 font-display text-5xl leading-tight">
-          Flame-Kissed Favourites
-        </h2>
-        <p className="mt-4 text-white/60">
-          Every dish is grilled fresh to order over natural charcoal
-        </p>
+        <Reveal>
+          <p className="text-sm font-semibold tracking-[0.2em] text-grill-orange">
+            THE MENU
+          </p>
+          <h2 className="mt-4 font-display text-5xl leading-tight">
+            Flame-Kissed Favourites
+          </h2>
+          <p className="mt-4 text-white/60">
+            Every dish is grilled fresh to order over natural charcoal
+          </p>
+        </Reveal>
 
         {dishes.length > 0 && (
           <div className="mx-auto mt-14 grid max-w-6xl gap-8 text-left sm:grid-cols-2 lg:grid-cols-3">
-            {dishes.map((dish) => {
+            {dishes.map((dish, i) => {
               const image = dish.images.find((img) => img.isPrimary) ?? dish.images[0];
               return (
-                <div key={dish.id} className="overflow-hidden rounded-xl">
-                  <div className="relative">
-                    {image ? (
-                      <img
-                        src={image.imageUrl}
-                        alt={dish.name}
-                        className="h-56 w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-56 w-full items-center justify-center bg-grill-brown-light text-white/40">
-                        No image yet
-                      </div>
+                <Reveal key={dish.id} delayMs={(i % 3) * 100}>
+                  <div className="overflow-hidden rounded-xl">
+                    <div className="relative">
+                      {image ? (
+                        <img
+                          src={image.imageUrl}
+                          alt={dish.name}
+                          className="h-56 w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-56 w-full items-center justify-center bg-grill-brown-light text-white/40">
+                          No image yet
+                        </div>
+                      )}
+                      <span className="absolute bottom-3 right-3 rounded-full bg-grill-orange px-3 py-1 text-sm font-semibold text-white">
+                        {Number(dish.price).toLocaleString()} MMK
+                      </span>
+                    </div>
+                    <h3 className="mt-4 font-display text-xl">{dish.name}</h3>
+                    {dish.description && (
+                      <p className="mt-2 text-sm text-white/60">{dish.description}</p>
                     )}
-                    <span className="absolute bottom-3 right-3 rounded-full bg-grill-orange px-3 py-1 text-sm font-semibold text-white">
-                      {Number(dish.price).toLocaleString()} MMK
-                    </span>
                   </div>
-                  <h3 className="mt-4 font-display text-xl">{dish.name}</h3>
-                  {dish.description && (
-                    <p className="mt-2 text-sm text-white/60">{dish.description}</p>
-                  )}
-                </div>
+                </Reveal>
               );
             })}
           </div>
@@ -156,78 +169,98 @@ export default function LandingPage() {
 
       {/* How It Works */}
       <section id="book" className="bg-grill-brown-dark px-6 py-24 text-center text-white">
-        <p className="text-sm font-semibold tracking-[0.2em] text-grill-orange">
-          HOW IT WORKS
-        </p>
-        <h2 className="mt-4 font-display text-5xl leading-tight">
-          Three Simple Steps
-        </h2>
+        <Reveal>
+          <p className="text-sm font-semibold tracking-[0.2em] text-grill-orange">
+            HOW IT WORKS
+          </p>
+          <h2 className="mt-4 font-display text-5xl leading-tight">
+            Three Simple Steps
+          </h2>
+        </Reveal>
 
         <div className="mx-auto mt-16 grid max-w-5xl gap-12 md:grid-cols-3">
-          <StepCard
-            icon={<CalendarCheck className="h-6 w-6" />}
-            title="Book Online with Deposit"
-            description="Reserve your riverside table in advance with a small deposit — guaranteed seating, no waiting."
-          />
-          <StepCard
-            icon={<QrCode className="h-6 w-6" />}
-            title="Or Walk In & Scan QR"
-            description="No reservation? No problem. Grab a table and scan the QR code to access the full digital menu."
-          />
-          <StepCard
-            icon={<Clipboard className="h-6 w-6" />}
-            title="Order & Track in Real Time"
-            description="Place your order from your phone and track every dish from grill to table — live."
-          />
+          <Reveal delayMs={0}>
+            <StepCard
+              icon={<CalendarCheck className="h-6 w-6" />}
+              title="Book Online with Deposit"
+              description="Reserve your riverside table in advance with a small deposit — guaranteed seating, no waiting."
+            />
+          </Reveal>
+          <Reveal delayMs={100}>
+            <StepCard
+              icon={<QrCode className="h-6 w-6" />}
+              title="Or Walk In & Scan QR"
+              description="No reservation? No problem. Grab a table and scan the QR code to access the full digital menu."
+            />
+          </Reveal>
+          <Reveal delayMs={200}>
+            <StepCard
+              icon={<Clipboard className="h-6 w-6" />}
+              title="Order & Track in Real Time"
+              description="Place your order from your phone and track every dish from grill to table — live."
+            />
+          </Reveal>
         </div>
       </section>
 
       {/* Gallery */}
       <section id="gallery" className="bg-grill-brown-dark px-6 pb-24 text-center text-white">
-        <p className="text-sm font-semibold tracking-[0.2em] text-grill-orange">
-          THE VIBE
-        </p>
-        <h2 className="mt-4 font-display text-5xl leading-tight">
-          Scenes from the Grill
-        </h2>
+        <Reveal>
+          <p className="text-sm font-semibold tracking-[0.2em] text-grill-orange">
+            THE VIBE
+          </p>
+          <h2 className="mt-4 font-display text-5xl leading-tight">
+            Scenes from the Grill
+          </h2>
+        </Reveal>
 
         <div className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-4 sm:grid-cols-3 sm:grid-rows-2">
-          <img
-            src="https://picsum.photos/seed/riverside-dining/900/900"
-            alt="Riverside dining at Ayeyarwady Grill"
-            className="h-full max-h-[560px] w-full rounded-xl object-cover sm:col-span-2 sm:row-span-2"
-          />
-          <img
-            src="https://picsum.photos/seed/charcoal-flame/600/400"
-            alt="Charcoal grill flame"
-            className="h-64 w-full rounded-xl object-cover sm:h-full"
-          />
-          <img
-            src="https://picsum.photos/seed/yangon-river-sunset/600/400"
-            alt="Sunset over the Yangon River"
-            className="h-64 w-full rounded-xl object-cover sm:h-full"
-          />
+          <Reveal className="sm:col-span-2 sm:row-span-2">
+            <img
+              src="https://picsum.photos/seed/riverside-dining/900/900"
+              alt="Riverside dining at Ayeyarwady Grill"
+              className="h-full max-h-[560px] w-full rounded-xl object-cover"
+            />
+          </Reveal>
+          <Reveal delayMs={100}>
+            <img
+              src="https://picsum.photos/seed/charcoal-flame/600/400"
+              alt="Charcoal grill flame"
+              className="h-64 w-full rounded-xl object-cover sm:h-full"
+            />
+          </Reveal>
+          <Reveal delayMs={200}>
+            <img
+              src="https://picsum.photos/seed/yangon-river-sunset/600/400"
+              alt="Sunset over the Yangon River"
+              className="h-64 w-full rounded-xl object-cover sm:h-full"
+            />
+          </Reveal>
         </div>
       </section>
 
       {/* Find Your Table */}
       <section id="contact" className="bg-grill-brown px-6 py-24 text-center text-white">
-        <p className="text-sm font-semibold tracking-[0.2em] text-grill-orange">
-          VISIT US
-        </p>
-        <h2 className="mt-4 font-display text-5xl leading-tight">
-          Find Your Table
-        </h2>
+        <Reveal>
+          <p className="text-sm font-semibold tracking-[0.2em] text-grill-orange">
+            VISIT US
+          </p>
+          <h2 className="mt-4 font-display text-5xl leading-tight">
+            Find Your Table
+          </h2>
+        </Reveal>
 
         <div className="mx-auto mt-14 grid max-w-5xl gap-10 text-left md:grid-cols-2">
-          <iframe
-            title="Ayeyarwady Grill location"
-            className="h-80 w-full rounded-xl border-0 md:h-full"
-            loading="lazy"
-            src="https://www.openstreetmap.org/export/embed.html?bbox=96.1620%2C16.7680%2C96.1780%2C16.7800&layer=mapnik&marker=16.7740%2C96.1700"
-          />
+          <Reveal>
+            <iframe
+              title="Ayeyarwady Grill location"
+              className="h-80 w-full rounded-xl border-0 md:h-full"
+              loading="lazy"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=96.1620%2C16.7680%2C96.1780%2C16.7800&layer=mapnik&marker=16.7740%2C96.1700"
+            />
+          </Reveal>
 
-          <div className="space-y-8">
+          <Reveal delayMs={100} className="space-y-8">
             <ContactRow icon={<MapPin className="h-5 w-5" />} title="Address">
               Lot 12, Botahtaung Jetty Road
               <br />
@@ -246,7 +279,7 @@ export default function LandingPage() {
             <ContactRow icon={<Mail className="h-5 w-5" />} title="Email">
               hello@ayeyarwadygrill.com
             </ContactRow>
-          </div>
+          </Reveal>
         </div>
       </section>
 
