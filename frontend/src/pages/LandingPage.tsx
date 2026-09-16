@@ -58,7 +58,7 @@ export default function LandingPage() {
         className="relative flex min-h-screen items-center justify-center bg-cover bg-center px-6 text-center text-white"
         style={{
           backgroundImage:
-            "linear-gradient(180deg, rgba(20,12,8,0.55) 0%, rgba(20,12,8,0.75) 100%), radial-gradient(ellipse at center, #4a2f1f 0%, #1c120c 80%)",
+            "linear-gradient(180deg, rgba(20,12,8,0.55) 0%, rgba(20,12,8,0.75) 100%), url('/images/banner.webp')",
         }}
       >
         <div className="max-w-2xl">
