@@ -28,12 +28,15 @@ export default function Navbar() {
       </nav>
 
       {user ? (
-        <button
-          onClick={logout}
-          className="rounded-md bg-grill-orange px-4 py-2 text-sm font-medium hover:bg-grill-orange-dark"
-        >
-          Log out
-        </button>
+        <div className="flex items-center gap-3">
+          <span className="hidden text-sm text-white/80 sm:inline">Hi, {user.name.split(" ")[0]}</span>
+          <button
+            onClick={logout}
+            className="rounded-md bg-grill-orange px-4 py-2 text-sm font-medium hover:bg-grill-orange-dark"
+          >
+            Log out
+          </button>
+        </div>
       ) : (
         <Link
           to="/book"
