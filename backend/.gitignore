@@ -3,6 +3,12 @@
 /public/hot
 /public/storage
 /storage/*.key
+# Scratch drop-folder for importing food photos — see its README. The
+# processed result lands in storage/app/public/menu-item-images/ (already
+# tracked, same as every other uploaded menu photo), so the raw originals
+# here don't need to be.
+/storage/app/food-photos-inbox/*
+!/storage/app/food-photos-inbox/README.md
 .env
 .env.backup
 .env.production
