@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Flame, Minus, Plus, ShoppingBag, UtensilsCrossed, X } from "lucide-react";
+import { Clock, Flame, Minus, Plus, ShoppingBag, UtensilsCrossed, X } from "lucide-react";
 import api from "../lib/api";
+import StatusBadge from "../components/StatusBadge";
 
 interface MenuItem {
   id: string;
@@ -26,8 +27,34 @@ interface Receipt {
   id: string;
   createdAt: string;
   totalAmount: number;
+  status?: string;
   table: { tableNumber: number };
   items: { id: string; quantity: number; unitPrice: number; item: { name: string } }[];
+}
+
+// Orders this browser has placed for a given table, so "History" can show
+// them again after "Order more" clears the single-receipt view — there's
+// no login for a QR guest, so this is tracked client-side rather than via
+// a customer_id (see OrderController::byTable on the backend).
+function orderIdsKey(tableNumber: string) {
+  return `qr-order-ids-${tableNumber}`;
+}
+function getStoredOrderIds(tableNumber: string): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(orderIdsKey(tableNumber)) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+function addStoredOrderId(tableNumber: string, id: string) {
+  try {
+    const ids = getStoredOrderIds(tableNumber);
+    if (!ids.includes(id)) {
+      localStorage.setItem(orderIdsKey(tableNumber), JSON.stringify([...ids, id]));
+    }
+  } catch {
+    // localStorage unavailable (private mode etc.) — history just won't persist
+  }
 }
 
 export default function QrOrderPage() {
@@ -43,6 +70,7 @@ export default function QrOrderPage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   useEffect(() => {
     api.get("/menu").then((res) => {
@@ -90,6 +118,7 @@ export default function QrOrderPage() {
         items: lines.map((l) => ({ itemId: l.itemId, quantity: l.quantity })),
       });
       setReceipt(data);
+      if (tableNumber) addStoredOrderId(tableNumber, String(data.id));
       setCart({});
       setCartOpen(false);
     } finally {
@@ -125,7 +154,19 @@ export default function QrOrderPage() {
   }
 
   if (receipt) {
-    return <ReceiptView receipt={receipt} tableNumber={tableNumber} onOrderMore={orderMore} />;
+    return (
+      <>
+        <ReceiptView
+          receipt={receipt}
+          tableNumber={tableNumber}
+          onOrderMore={orderMore}
+          onViewHistory={() => setHistoryOpen(true)}
+        />
+        {historyOpen && (
+          <HistoryDrawer tableId={tableId} tableNumber={tableNumber} onClose={() => setHistoryOpen(false)} />
+        )}
+      </>
+    );
   }
 
   return (
@@ -136,7 +177,16 @@ export default function QrOrderPage() {
             <p className="text-xs uppercase tracking-wide text-white/50">Ayeyarwady Grill · Table {tableNumber}</p>
             <h1 className="font-display text-xl">Menu</h1>
           </div>
-          <Flame className="h-6 w-6 text-grill-orange" strokeWidth={1.75} />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setHistoryOpen(true)}
+              className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/20"
+            >
+              <Clock className="h-3.5 w-3.5" strokeWidth={2} />
+              History
+            </button>
+            <Flame className="h-6 w-6 text-grill-orange" strokeWidth={1.75} />
+          </div>
         </div>
 
         {categories && categories.length > 0 && (
@@ -315,6 +365,92 @@ export default function QrOrderPage() {
           </div>
         </div>
       )}
+
+      {historyOpen && (
+        <HistoryDrawer tableId={tableId} tableNumber={tableNumber} onClose={() => setHistoryOpen(false)} />
+      )}
+    </div>
+  );
+}
+
+function HistoryDrawer({
+  tableId,
+  tableNumber,
+  onClose,
+}: {
+  tableId: string | null;
+  tableNumber: string;
+  onClose: () => void;
+}) {
+  const [orders, setOrders] = useState<Receipt[] | null>(null);
+
+  useEffect(() => {
+    const ids = getStoredOrderIds(tableNumber);
+    if (!tableId || ids.length === 0) {
+      setOrders([]);
+      return;
+    }
+    api
+      .get(`/orders/by-table/${tableId}`, { params: { ids: ids.join(",") } })
+      .then((res) => setOrders(res.data))
+      .catch(() => setOrders([]));
+  }, [tableId, tableNumber]);
+
+  return (
+    <div className="fixed inset-0 z-40 flex flex-col justify-end bg-black/40">
+      <div className="max-h-[80vh] overflow-y-auto rounded-t-2xl bg-white">
+        <div className="sticky top-0 flex items-center justify-between border-b border-grill-brown/10 bg-white px-5 py-4">
+          <h2 className="flex items-center gap-2 font-display text-lg text-grill-brown">
+            <Clock className="h-4 w-4 text-grill-orange-dark" strokeWidth={1.75} />
+            Your orders · Table {tableNumber}
+          </h2>
+          <button onClick={onClose} className="rounded-md p-1 text-grill-brown/40 hover:bg-grill-brown/5">
+            <X className="h-5 w-5" strokeWidth={1.75} />
+          </button>
+        </div>
+
+        <div className="divide-y divide-grill-brown/5 px-5 pb-6">
+          {orders === null && (
+            <p className="py-10 text-center text-sm text-grill-brown/40">Loading…</p>
+          )}
+          {orders?.length === 0 && (
+            <p className="py-10 text-center text-sm text-grill-brown/40">
+              No orders yet this visit.
+            </p>
+          )}
+          {orders?.map((order) => (
+            <div key={order.id} className="py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-grill-brown">Order #{order.id}</p>
+                  <p className="text-xs text-grill-brown/40">
+                    {new Date(order.createdAt).toLocaleString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+                {order.status && <StatusBadge status={order.status} />}
+              </div>
+              <ul className="mt-2 space-y-1 text-sm">
+                {order.items.map((line) => (
+                  <li key={line.id} className="flex justify-between text-grill-brown/70">
+                    <span>
+                      {line.quantity}× {line.item.name}
+                    </span>
+                    <span>{(Number(line.unitPrice) * line.quantity).toLocaleString()} MMK</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-2 flex justify-end text-sm font-medium text-grill-brown">
+                {Number(order.totalAmount).toLocaleString()} MMK
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -323,10 +459,12 @@ function ReceiptView({
   receipt,
   tableNumber,
   onOrderMore,
+  onViewHistory,
 }: {
   receipt: Receipt;
   tableNumber: string;
   onOrderMore: () => void;
+  onViewHistory: () => void;
 }) {
   const placedAt = new Date(receipt.createdAt).toLocaleString(undefined, {
     dateStyle: "medium",
@@ -378,6 +516,13 @@ function ReceiptView({
         className="mt-6 w-full max-w-sm rounded-md bg-grill-orange py-3 text-sm font-medium text-white hover:bg-grill-orange-dark"
       >
         Order more
+      </button>
+      <button
+        onClick={onViewHistory}
+        className="mt-3 flex w-full max-w-sm items-center justify-center gap-1.5 rounded-md py-2 text-sm font-medium text-grill-brown/60 hover:text-grill-brown"
+      >
+        <Clock className="h-3.5 w-3.5" strokeWidth={2} />
+        View order history
       </button>
     </div>
   );

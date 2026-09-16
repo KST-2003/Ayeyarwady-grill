@@ -78,7 +78,7 @@ class OrderController extends Controller
             SafeBroadcast::send(new TableStatusChanged($table));
         }
 
-        $order->load(['items.item', 'table']);
+        $order->load(['items.item.images', 'table']);
 
         SafeBroadcast::send(new OrderCreated($order));
 
@@ -89,7 +89,7 @@ class OrderController extends Controller
     public function live()
     {
         $orders = Order::whereNotIn('status', ['COMPLETED', 'CANCELLED'])
-            ->with(['items.item', 'table', 'customer'])
+            ->with(['items.item.images', 'table', 'customer'])
             ->orderBy('created_at')
             ->get();
 
@@ -100,7 +100,30 @@ class OrderController extends Controller
     public function mine(Request $request)
     {
         $orders = Order::where('customer_id', $request->user()->id)
-            ->with(['items.item', 'table'])
+            ->with(['items.item.images', 'table'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json($orders);
+    }
+
+    // GET /api/orders/by-table/{tableId} — the QR ordering page's own order
+    // history: a dine-in guest may place several orders in one visit (add
+    // a round, then another) without ever logging in, so there's no
+    // customer_id to key off like /orders/mine does. The frontend tracks
+    // which order ids it placed for this table in this browser (localStorage)
+    // and passes them here to refresh their live status; we scope strictly
+    // to that table + those ids rather than returning the table's full
+    // history, so one guest's session can't see a previous diner's orders.
+    public function byTable(Request $request, $tableId)
+    {
+        $ids = collect(explode(',', (string) $request->query('ids', '')))
+            ->filter()
+            ->values();
+
+        $orders = Order::where('table_id', $tableId)
+            ->whereIn('id', $ids)
+            ->with(['items.item.images', 'table'])
             ->orderByDesc('created_at')
             ->get();
 
@@ -142,7 +165,7 @@ class OrderController extends Controller
             ]);
         }
 
-        $order->load(['items.item', 'table']);
+        $order->load(['items.item.images', 'table']);
 
         SafeBroadcast::send(new OrderStatusChanged($order));
 

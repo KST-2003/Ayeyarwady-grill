@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, FormEvent } from "react";
-import { QrCode, Upload } from "lucide-react";
+import { Check, Pencil, QrCode, Trash2, Upload, X } from "lucide-react";
 import api from "../lib/api";
 import AdminSidebar from "../components/AdminSidebar";
 
@@ -14,6 +14,11 @@ function MethodCard({ method, onUpdated }: { method: PaymentMethod; onUpdated: (
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
+
+  const [editing, setEditing] = useState(false);
+  const [nameDraft, setNameDraft] = useState(method.methodName);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   async function toggleActive() {
     await api.patch(`/payment-methods/${method.id}`, { isActive: !method.isActive });
@@ -38,18 +43,112 @@ function MethodCard({ method, onUpdated }: { method: PaymentMethod; onUpdated: (
     }
   }
 
+  function startEditing() {
+    setNameDraft(method.methodName);
+    setError("");
+    setEditing(true);
+  }
+
+  function cancelEditing() {
+    setEditing(false);
+    setNameDraft(method.methodName);
+  }
+
+  async function saveName() {
+    const trimmed = nameDraft.trim();
+    if (!trimmed || trimmed === method.methodName) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      await api.patch(`/payment-methods/${method.id}`, { methodName: trimmed });
+      setEditing(false);
+      onUpdated();
+    } catch (err: any) {
+      setError(err?.response?.data?.error ?? "Could not rename payment method");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!window.confirm(`Delete "${method.methodName}"? This can't be undone.`)) return;
+    setDeleting(true);
+    setError("");
+    try {
+      await api.delete(`/payment-methods/${method.id}`);
+      onUpdated();
+    } catch (err: any) {
+      setError(err?.response?.data?.error ?? "Could not delete payment method");
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="rounded-2xl border border-grill-brown/10 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between">
-        <span className="font-medium text-grill-brown">{method.methodName}</span>
-        <button
-          onClick={toggleActive}
-          className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-            method.isActive ? "bg-emerald-50 text-emerald-700" : "bg-grill-brown/5 text-grill-brown/50"
-          }`}
-        >
-          {method.isActive ? "Active" : "Inactive"}
-        </button>
+      <div className="flex items-center justify-between gap-2">
+        {editing ? (
+          <div className="flex flex-1 items-center gap-1.5">
+            <input
+              autoFocus
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveName();
+                if (e.key === "Escape") cancelEditing();
+              }}
+              className="min-w-0 flex-1 rounded-md border border-grill-brown/20 px-2 py-1 text-sm focus:border-grill-orange focus:outline-none focus:ring-2 focus:ring-grill-orange/10"
+            />
+            <button
+              onClick={saveName}
+              disabled={saving}
+              title="Save"
+              className="rounded p-1 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
+            >
+              <Check className="h-4 w-4" strokeWidth={2} />
+            </button>
+            <button
+              onClick={cancelEditing}
+              disabled={saving}
+              title="Cancel"
+              className="rounded p-1 text-grill-brown/40 hover:bg-grill-brown/5"
+            >
+              <X className="h-4 w-4" strokeWidth={2} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate font-medium text-grill-brown">{method.methodName}</span>
+            <button
+              onClick={startEditing}
+              title="Rename"
+              className="shrink-0 rounded p-1 text-grill-brown/30 hover:bg-grill-brown/5 hover:text-grill-brown/60"
+            >
+              <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+            </button>
+          </div>
+        )}
+
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            onClick={toggleActive}
+            className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+              method.isActive ? "bg-emerald-50 text-emerald-700" : "bg-grill-brown/5 text-grill-brown/50"
+            }`}
+          >
+            {method.isActive ? "Active" : "Inactive"}
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            title="Delete payment method"
+            className="rounded p-1.5 text-grill-brown/30 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+          >
+            <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+          </button>
+        </div>
       </div>
 
       <div className="mt-4 flex h-32 w-32 items-center justify-center overflow-hidden rounded-lg border border-dashed border-grill-brown/20 bg-grill-brown/[0.02]">

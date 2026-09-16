@@ -4,6 +4,10 @@ import { CalendarCheck, Coffee, CreditCard, Table2, Users } from "lucide-react";
 import api from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import AdminSidebar from "../components/AdminSidebar";
+import ColumnChart from "../components/charts/ColumnChart";
+import HorizontalBars from "../components/charts/HorizontalBars";
+import StackedShareBar from "../components/charts/StackedShareBar";
+import { ORDER_STATUS_RAMP, titleCaseStatus } from "../lib/orderStatusColors";
 
 interface Overview {
   pendingPayments: number;
@@ -12,6 +16,46 @@ interface Overview {
   occupiedTables: number;
   totalTables: number;
   totalStaff: number;
+}
+
+interface Analytics {
+  revenueByDay: { date: string; orders: number; revenue: number }[];
+  bookingsByDay: { date: string; count: number }[];
+  topMenuItems: { name: string; quantity: number }[];
+  orderStatusToday: { status: string; count: number }[];
+  paymentMethodShare: { method: string; total: number }[];
+}
+
+// Fixed order (brand color first), validated for adjacent CVD-safe contrast —
+// see the dataviz skill's palette validator. A 5th+ payment method folds
+// into "Other" rather than generating a new hue.
+const CATEGORICAL_PALETTE = ["#D9642A", "#2a78d6", "#1baf7a", "#4a3aa7"];
+
+function shortDate(iso: string): string {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+function fullDate(iso: string): string {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+function mmk(v: number): string {
+  return `${Math.round(v).toLocaleString()} MMK`;
+}
+
+// The categorical palette validates up to 4 distinct hues at this
+// (all-pairs, legend + direct label) series count — see the series-count
+// ladder in the dataviz skill. A 5th+ payment method folds into "Other"
+// rather than generating a new, CVD-indistinguishable hue.
+function foldIntoOther(
+  rows: { method: string; total: number }[]
+): { method: string; total: number }[] {
+  if (rows.length <= CATEGORICAL_PALETTE.length) return rows;
+  const head = rows.slice(0, CATEGORICAL_PALETTE.length - 1);
+  const tail = rows.slice(CATEGORICAL_PALETTE.length - 1);
+  return [...head, { method: "Other", total: tail.reduce((sum, r) => sum + r.total, 0) }];
 }
 
 const CARDS: {
@@ -52,9 +96,11 @@ export default function AdminOverviewPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
   const [data, setData] = useState<Overview | null>(null);
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
 
   useEffect(() => {
     api.get("/overview").then((res) => setData(res.data));
+    api.get("/overview/analytics").then((res) => setAnalytics(res.data));
   }, []);
 
   return (
@@ -97,6 +143,132 @@ export default function AdminOverviewPage() {
               </Link>
             );
           })}
+        </div>
+
+        <p className="mt-10 text-xs font-semibold uppercase tracking-[0.15em] text-grill-orange-dark">
+          Analytics
+        </p>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-3">
+          <div className="rounded-2xl border border-grill-brown/10 bg-white p-5 shadow-sm lg:col-span-2">
+            <h2 className="font-display text-base text-grill-brown">Revenue</h2>
+            <p className="text-xs text-grill-brown/40">Last 14 days, by order date</p>
+            <div className="mt-4">
+              {analytics ? (
+                <ColumnChart
+                  data={analytics.revenueByDay.map((d) => ({
+                    label: shortDate(d.date),
+                    fullLabel: fullDate(d.date),
+                    value: d.revenue,
+                  }))}
+                  color="#D9642A"
+                  valueFormatter={mmk}
+                />
+              ) : (
+                <p className="py-10 text-center text-sm text-grill-brown/40">Loading…</p>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-grill-brown/10 bg-white p-5 shadow-sm">
+            <h2 className="font-display text-base text-grill-brown">Orders placed</h2>
+            <p className="text-xs text-grill-brown/40">Last 14 days</p>
+            <div className="mt-4">
+              {analytics ? (
+                <ColumnChart
+                  data={analytics.revenueByDay.map((d) => ({
+                    label: shortDate(d.date),
+                    fullLabel: fullDate(d.date),
+                    value: d.orders,
+                  }))}
+                  color="#2a78d6"
+                  valueFormatter={(v) => `${v} order${v === 1 ? "" : "s"}`}
+                />
+              ) : (
+                <p className="py-10 text-center text-sm text-grill-brown/40">Loading…</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-3">
+          <div className="rounded-2xl border border-grill-brown/10 bg-white p-5 shadow-sm">
+            <h2 className="font-display text-base text-grill-brown">Today's kitchen pipeline</h2>
+            <p className="text-xs text-grill-brown/40">Every order placed today, by status</p>
+            <div className="mt-4">
+              {analytics ? (
+                <HorizontalBars
+                  data={analytics.orderStatusToday.map((d) => ({
+                    label: titleCaseStatus(d.status),
+                    value: d.count,
+                    color: ORDER_STATUS_RAMP[d.status] ?? "#898781",
+                  }))}
+                  emptyLabel="No orders placed today yet"
+                />
+              ) : (
+                <p className="py-10 text-center text-sm text-grill-brown/40">Loading…</p>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-grill-brown/10 bg-white p-5 shadow-sm">
+            <h2 className="font-display text-base text-grill-brown">Top sellers</h2>
+            <p className="text-xs text-grill-brown/40">By quantity, last 30 days</p>
+            <div className="mt-4">
+              {analytics ? (
+                <HorizontalBars
+                  data={analytics.topMenuItems.map((d) => ({
+                    label: d.name,
+                    value: d.quantity,
+                    color: "#D9642A",
+                  }))}
+                  emptyLabel="No orders in the last 30 days"
+                />
+              ) : (
+                <p className="py-10 text-center text-sm text-grill-brown/40">Loading…</p>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-grill-brown/10 bg-white p-5 shadow-sm">
+            <h2 className="font-display text-base text-grill-brown">Bookings</h2>
+            <p className="text-xs text-grill-brown/40">Last 14 days, by booking date</p>
+            <div className="mt-4">
+              {analytics ? (
+                <ColumnChart
+                  data={analytics.bookingsByDay.map((d) => ({
+                    label: shortDate(d.date),
+                    fullLabel: fullDate(d.date),
+                    value: d.count,
+                  }))}
+                  color="#1baf7a"
+                  valueFormatter={(v) => `${v} booking${v === 1 ? "" : "s"}`}
+                />
+              ) : (
+                <p className="py-10 text-center text-sm text-grill-brown/40">Loading…</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-grill-brown/10 bg-white p-5 shadow-sm">
+          <h2 className="font-display text-base text-grill-brown">Payment methods</h2>
+          <p className="text-xs text-grill-brown/40">Share of paid deposits, last 30 days</p>
+          <div className="mt-4">
+            {analytics ? (
+              <StackedShareBar
+                data={foldIntoOther(analytics.paymentMethodShare).map((d, i) => ({
+                  label: d.method,
+                  value: d.total,
+                  color: d.method === "Other" ? "#898781" : CATEGORICAL_PALETTE[i % CATEGORICAL_PALETTE.length],
+                }))}
+                valueFormatter={mmk}
+                emptyLabel="No paid deposits in the last 30 days"
+              />
+            ) : (
+              <p className="py-10 text-center text-sm text-grill-brown/40">Loading…</p>
+            )}
+          </div>
         </div>
 
         {isAdmin && (

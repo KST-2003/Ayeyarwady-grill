@@ -69,6 +69,7 @@ Route::middleware(['auth:sanctum', 'role:staff,admin'])->group(function () {
 // when it's absent — same contract as the Node backend's optionalAuth.
 Route::post('/orders', [OrderController::class, 'store'])
     ->middleware('optional.auth');
+Route::get('/orders/by-table/{tableId}', [OrderController::class, 'byTable']);
 
 Route::middleware(['auth:sanctum', 'role:staff,admin'])->group(function () {
     Route::get('/orders/live', [OrderController::class, 'live']);
@@ -100,6 +101,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // ── Overview (dashboard stat cards) ─────────────────────────────────────
 Route::middleware(['auth:sanctum', 'role:staff,admin'])->group(function () {
     Route::get('/overview', [OverviewController::class, 'index']);
+    Route::get('/overview/analytics', [OverviewController::class, 'analytics']);
 });
 
 // ── Payment methods ─────────────────────────────────────────────────────
@@ -111,6 +113,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('/payment-methods', [PaymentMethodController::class, 'store']);
     Route::patch('/payment-methods/{id}', [PaymentMethodController::class, 'update']);
     Route::post('/payment-methods/{id}/qr-image', [PaymentMethodController::class, 'uploadQr']);
+    Route::delete('/payment-methods/{id}', [PaymentMethodController::class, 'destroy']);
 });
 
 // ── Audit log ─────────────────────────────────────────────────────────

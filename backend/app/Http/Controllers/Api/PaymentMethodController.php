@@ -110,4 +110,28 @@ class PaymentMethodController extends Controller
 
         return response()->json($method->fresh());
     }
+
+    // DELETE /api/payment-methods/{id} — admin only
+    public function destroy(Request $request, $id)
+    {
+        $method = PaymentMethod::findOrFail($id);
+
+        if ($method->payments()->exists()) {
+            return response()->json([
+                'error' => 'Cannot delete a payment method that has already been used in payments. Mark it inactive instead.',
+            ], 409);
+        }
+
+        $oldValue = $method->toArray();
+
+        foreach (PaymentMethod::QR_EXTENSIONS as $ext) {
+            Storage::disk('public')->delete("payment-method-qr/{$id}.{$ext}");
+        }
+
+        $method->delete();
+
+        AuditLogger::record($request, 'delete', 'payment_methods', $id, $oldValue, null);
+
+        return response()->json(null, 204);
+    }
 }
