@@ -288,9 +288,7 @@ export default function LandingPage() {
         <div className="mx-auto grid max-w-5xl gap-10 sm:grid-cols-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-sm font-display">
-                AG
-              </span>
+              <img src="/images/logo-icon.png" alt="Ayeyarwady Grill" className="h-9 w-9 rounded-full object-cover" />
               <span className="font-display text-lg">Ayeyarwady Grill</span>
             </div>
             <p className="mt-4 text-sm text-white/50">

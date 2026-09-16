@@ -43,9 +43,7 @@ export default function AdminSidebar({ active }: { active: string }) {
   return (
     <aside className="flex w-64 shrink-0 flex-col bg-grill-brown-dark px-4 py-6 text-white">
       <Link to="/" className="mb-8 flex items-center gap-2 px-2">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-sm font-display">
-          AG
-        </span>
+        <img src="/images/logo-icon.png" alt="Ayeyarwady Grill" className="h-9 w-9 rounded-full object-cover" />
         <span className="font-display text-base tracking-wide">Ayeyarwady Grill</span>
       </Link>
 

@@ -7,9 +7,7 @@ export default function Navbar() {
   return (
     <header className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-8 py-5 text-white">
       <Link to="/" className="flex items-center gap-2">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-sm font-display">
-          AG
-        </span>
+        <img src="/images/logo-icon.png" alt="Ayeyarwady Grill" className="h-9 w-9 rounded-full object-cover" />
         <span className="font-display text-lg tracking-wide">Ayeyarwady Grill</span>
       </Link>
 
