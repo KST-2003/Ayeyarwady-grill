@@ -82,6 +82,18 @@ class OrderController extends Controller
 
         SafeBroadcast::send(new OrderCreated($order));
 
+        // Floor-wide notification (staff_id/customer_id both left null —
+        // see NotificationController::mine) so staff/admin have a real
+        // record of new orders to catch up on, separate from the Live
+        // Orders page's real-time view which only helps if it's open.
+        Notification::create([
+            'order_id' => $order->id,
+            'message' => $table
+                ? "New order placed for Table {$table->table_number}."
+                : 'New walk-in order placed.',
+            'type' => 'NEW_ORDER',
+        ]);
+
         return response()->json($order, 201);
     }
 

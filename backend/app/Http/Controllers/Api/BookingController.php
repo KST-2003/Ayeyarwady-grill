@@ -99,6 +99,15 @@ class BookingController extends Controller
             'type' => 'BOOKING_REMINDER',
         ]);
 
+        // Floor-wide notification (see NotificationController::mine) —
+        // staff/admin need to know a new booking came in, since it stays
+        // PENDING until they verify the deposit proof.
+        Notification::create([
+            'message' => "New booking request: Table {$booking->table->table_number} for {$booking->guest_count} guests, "
+                ."{$booking->booking_date} at {$booking->booking_time}.",
+            'type' => 'BOOKING_REMINDER',
+        ]);
+
         $booking->load(['table', 'customer', 'payments']);
 
         SafeBroadcast::send(new BookingCreated($booking));

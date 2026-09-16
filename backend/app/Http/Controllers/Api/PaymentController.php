@@ -52,6 +52,21 @@ class PaymentController extends Controller
             'status' => 'PENDING',
         ]);
 
+        Notification::create([
+            'customer_id' => $booking->customer_id,
+            'message' => 'Your payment screenshot was received — the restaurant will verify it and confirm your table shortly.',
+            'type' => 'PAYMENT_SUBMITTED',
+        ]);
+
+        // Floor-wide notification (see NotificationController::mine) — this
+        // is the actual signal staff/admin need to go verify a deposit via
+        // PaymentController::verify; without it, a submitted proof just
+        // sits there until someone happens to check Bookings & Deposits.
+        Notification::create([
+            'message' => "Payment proof uploaded for Table {$booking->table->table_number}'s booking — needs verification.",
+            'type' => 'PAYMENT_PROOF_UPLOADED',
+        ]);
+
         return response()->json($payment);
     }
 

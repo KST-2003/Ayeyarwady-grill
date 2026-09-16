@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import {
+  Bell,
   BookText,
   CalendarCheck,
   ClipboardList,
@@ -18,6 +19,7 @@ const STAFF_NAV = [
   { label: "Live Orders", to: "/staff/orders", icon: Coffee },
   { label: "Bookings & Deposits", to: "/staff/bookings", icon: CalendarCheck },
   { label: "Attendance", to: "/staff/attendance", icon: ClipboardList },
+  { label: "Notifications", to: "/staff/notifications", icon: Bell },
 ];
 
 const ADMIN_NAV = [

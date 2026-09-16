@@ -3,6 +3,9 @@ const TITLES: Record<string, string> = {
   DEPOSIT_RECEIPT: "Deposit Receipt",
   PAYMENT_REJECTED: "Payment Rejected",
   ORDER_UPDATE: "Order Update",
+  NEW_ORDER: "New Order",
+  PAYMENT_SUBMITTED: "Payment Submitted",
+  PAYMENT_PROOF_UPLOADED: "Payment Proof Uploaded",
 };
 
 // The schema's `notifications.type` is a free-text string (see

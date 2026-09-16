@@ -12,6 +12,7 @@ import QrOrderPage from "./pages/QrOrderPage";
 import AdminOverviewPage from "./pages/AdminOverviewPage";
 import StaffDashboard from "./pages/StaffDashboard";
 import StaffBookingsPage from "./pages/StaffBookingsPage";
+import StaffNotificationsPage from "./pages/StaffNotificationsPage";
 import AdminAttendancePage from "./pages/AdminAttendancePage";
 import AdminMenuPage from "./pages/AdminMenuPage";
 import AdminTablesPage from "./pages/AdminTablesPage";
@@ -90,6 +91,14 @@ export default function App() {
         element={
           <ProtectedRoute allow={["STAFF", "ADMIN"]}>
             <StaffBookingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/staff/notifications"
+        element={
+          <ProtectedRoute allow={["STAFF", "ADMIN"]}>
+            <StaffNotificationsPage />
           </ProtectedRoute>
         }
       />
