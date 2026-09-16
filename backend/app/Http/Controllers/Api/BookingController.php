@@ -33,9 +33,17 @@ class BookingController extends Controller
             ->whereNotNull('table_id')
             ->pluck('table_id');
 
+        // Excludes OCCUPIED and NEEDS_CLEANING — both are live dine-in floor
+        // states (see TableController), not date/time-scoped like a
+        // booking is, but this app has no way to know when an occupied
+        // table will free up, so the safe behavior is to leave it off the
+        // picker entirely rather than risk double-booking it. RESERVED is
+        // left bookable: it's a short-lived (~20 min) state from a QR scan
+        // with no order yet, and self-expires (TableController::reapStaleReservations),
+        // so it's not a meaningful signal for a reservation days out.
         $availableTables = DiningTable::whereNotIn('id', $bookedTableIds)
             ->where('capacity', '>=', $guests)
-            ->where('status', '!=', 'NEEDS_CLEANING')
+            ->whereNotIn('status', ['OCCUPIED', 'NEEDS_CLEANING'])
             ->with('section')
             ->orderBy('table_number')
             ->get();

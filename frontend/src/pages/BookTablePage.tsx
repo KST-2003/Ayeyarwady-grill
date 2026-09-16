@@ -56,6 +56,7 @@ export default function BookTablePage() {
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [booking, setBooking] = useState<ConfirmedBooking | null>(null);
+  const [confirmError, setConfirmError] = useState("");
 
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -95,6 +96,7 @@ export default function BookTablePage() {
     if (!selectedTable || !selectedDate || !selectedTime) return;
 
     setConfirming(true);
+    setConfirmError("");
     try {
       if (contactName !== user.name || contactPhone !== (user.phone ?? "")) {
         await updateProfile({ name: contactName, phone: contactPhone });
@@ -109,6 +111,14 @@ export default function BookTablePage() {
       });
       setBooking(data);
       setConfirmed(true);
+    } catch (err: any) {
+      // Table availability can change between step 2 (picking a table) and
+      // here — someone else may have booked it in the meantime. Send them
+      // back to re-pick rather than leaving them stuck on a dead button.
+      setConfirmError(
+        err?.response?.data?.error ??
+          "Couldn't confirm this booking — the table may no longer be available. Please go back and pick another."
+      );
     } finally {
       setConfirming(false);
     }
@@ -483,6 +493,10 @@ export default function BookTablePage() {
                   <span className="text-sm text-grill-brown/60">Deposit to confirm</span>
                   <span className="font-display text-xl text-grill-brown">20,000 MMK</span>
                 </div>
+
+                {confirmError && (
+                  <p className="mt-4 rounded-md bg-red-50 px-4 py-2.5 text-sm text-red-600">{confirmError}</p>
+                )}
 
                 <div className="mt-8 flex justify-between border-t border-grill-brown/8 pt-6">
                   <button
