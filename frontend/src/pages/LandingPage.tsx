@@ -81,12 +81,6 @@ export default function LandingPage() {
             >
               Book a Table
             </Link>
-            <Link
-              to="/order"
-              className="rounded-md border border-white/40 px-6 py-3 font-medium hover:bg-white/10"
-            >
-              Scan to Order
-            </Link>
           </div>
         </div>
       </section>
