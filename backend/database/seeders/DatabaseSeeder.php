@@ -13,6 +13,7 @@ use App\Models\Staff;
 use App\Models\StaffRole;
 use App\Models\TableSection;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
@@ -96,49 +97,49 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Grilled Tiger Prawns',
                 'description' => 'Jumbo river prawns marinated in garlic butter and chili, grilled until smoky and succulent.',
                 'price' => 18500,
-                'image' => 'https://picsum.photos/seed/tiger-prawns/800/600',
+                'image' => '1-1789575515.jpg',
             ],
             [
                 'category_id' => $grilled->id,
                 'name' => 'Whole Grilled River Fish',
                 'description' => 'Fresh Ayeyarwady river fish stuffed with lemongrass and kaffir lime, charcoal-grilled whole.',
                 'price' => 22000,
-                'image' => 'https://picsum.photos/seed/river-fish/800/600',
+                'image' => '2-1789575515.jpeg',
             ],
             [
                 'category_id' => $grilled->id,
                 'name' => 'Beef Satay Skewers',
                 'description' => 'Tender beef strips on bamboo skewers with housemade peanut sauce and pickled cucumber.',
                 'price' => 12000,
-                'image' => 'https://picsum.photos/seed/beef-satay/800/600',
+                'image' => '3-1789575515.webp',
             ],
             [
                 'category_id' => $grilled->id,
                 'name' => 'Charcoal BBQ Pork Ribs',
                 'description' => 'Slow-grilled pork ribs glazed in a smoky tamarind BBQ sauce, finished with spring onion.',
                 'price' => 21000,
-                'image' => 'https://picsum.photos/seed/pork-ribs/800/600',
+                'image' => '4-1789575515.jpg',
             ],
             [
                 'category_id' => $grilled->id,
                 'name' => 'Butter Grilled Fish Fillet',
                 'description' => 'Flaky white fish fillet grilled in herb butter, served with a squeeze of fresh lime.',
                 'price' => 19500,
-                'image' => 'https://picsum.photos/seed/fish-fillet/800/600',
+                'image' => '5-1789575515.jpeg',
             ],
             [
                 'category_id' => $grilled->id,
                 'name' => 'Charred Squid & Chili Dip',
                 'description' => 'Whole grilled squid rings over charcoal, served with a fiery Myanmar-style chili dip.',
                 'price' => 16000,
-                'image' => 'https://picsum.photos/seed/grilled-squid/800/600',
+                'image' => '6-1789575515.jpeg',
             ],
             [
                 'category_id' => $drinks->id,
                 'name' => 'Myanmar Beer',
                 'description' => '500ml draft',
                 'price' => 4000,
-                'image' => null,
+                'image' => '7-1788941405.jpg',
             ],
         ];
         foreach ($menuItems as $item) {
@@ -147,12 +148,12 @@ class DatabaseSeeder extends Seeder
                 ['description' => $item['description'], 'price' => $item['price']]
             );
 
-            if ($item['image']) {
-                MenuItemImage::firstOrCreate(
-                    ['item_id' => $menuItem->id, 'is_primary' => true],
-                    ['image_url' => $item['image']]
-                );
-            }
+            // Photos are committed in storage/app/public/menu-item-images/;
+            // the URL is built from APP_URL, same as MenuController::uploadImage.
+            MenuItemImage::firstOrCreate(
+                ['item_id' => $menuItem->id, 'is_primary' => true],
+                ['image_url' => Storage::disk('public')->url('menu-item-images/'.$item['image'])]
+            );
         }
 
         $this->command->info('Seed complete.');
