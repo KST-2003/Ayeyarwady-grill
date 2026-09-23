@@ -126,7 +126,23 @@ class MenuController extends Controller
         $item = MenuItem::findOrFail($id);
         $oldValue = $item->toArray();
 
+        $validator = Validator::make($request->all(), [
+            'categoryId' => 'sometimes|required|exists:categories,id',
+            'name' => 'sometimes|required|string|max:255',
+            'price' => 'sometimes|required|numeric|min:0',
+            'description' => 'sometimes|nullable|string',
+            'prepTimeMin' => 'sometimes|nullable|integer|min:0',
+            'isAvailable' => 'sometimes|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 400);
+        }
+
         $data = [];
+        if ($request->has('categoryId')) {
+            $data['category_id'] = $request->input('categoryId');
+        }
         if ($request->has('name')) {
             $data['name'] = $request->input('name');
         }
