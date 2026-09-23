@@ -66,7 +66,6 @@ deploy_backend() {
     php artisan migrate --force
     php artisan config:cache
     php artisan route:cache
-    php artisan view:cache
     chown -R www-data:www-data storage bootstrap/cache
 
     step "Backend: reload PHP-FPM and restart Reverb"
