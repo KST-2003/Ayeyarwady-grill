@@ -30,6 +30,8 @@ jobs:
             echo "::warning::DEPLOY_HOST / DEPLOY_SSH_KEY secrets not set — skipping deploy."
             exit 0
           fi
+          # Tolerate stray whitespace/newlines pasted into the secret.
+          DEPLOY_HOST=$(printf '%s' "$DEPLOY_HOST" | tr -d '[:space:]')
           mkdir -p ~/.ssh
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
