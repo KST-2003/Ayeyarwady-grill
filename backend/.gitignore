@@ -13,7 +13,6 @@
 .env.backup
 .env.production
 .phpunit.result.cache
-composer.lock
 Homestead.json
 Homestead.yaml
 auth.json
@@ -23,3 +22,11 @@ yarn-error.log
 /.idea
 /.vscode
 .DS_Store
+
+# Runtime files Laravel writes on every machine — never commit these
+/storage/logs/*.log
+/storage/framework/views/*.php
+/storage/framework/cache/data/*
+!/storage/framework/cache/data/.gitkeep
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitkeep
