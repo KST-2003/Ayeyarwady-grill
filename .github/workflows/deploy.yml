@@ -1,0 +1,38 @@
+name: Deploy to droplet
+
+# Every push to main runs deploy.sh on the droplet over SSH.
+# Needs two repo secrets: DEPLOY_HOST (droplet IP) and DEPLOY_SSH_KEY
+# (private key whose public half is in the droplet's authorized_keys).
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - '**.pdf'
+  workflow_dispatch:
+
+# Queue deploys instead of running two at once.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Deploy over SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          if [ -z "$DEPLOY_HOST" ] || [ -z "$DEPLOY_SSH_KEY" ]; then
+            echo "::warning::DEPLOY_HOST / DEPLOY_SSH_KEY secrets not set — skipping deploy."
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          # The key is locked to deploy.sh on the server, so the command here is ignored.
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes root@"$DEPLOY_HOST" deploy
