@@ -31,6 +31,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/menu/admin', [MenuController::class, 'adminIndex']);
     Route::post('/menu/categories', [MenuController::class, 'storeCategory']);
     Route::patch('/menu/categories/{id}', [MenuController::class, 'updateCategory']);
+    Route::delete('/menu/categories/{id}', [MenuController::class, 'destroyCategory']);
     Route::post('/menu/items', [MenuController::class, 'storeItem']);
     Route::patch('/menu/items/{id}', [MenuController::class, 'updateItem']);
     Route::post('/menu/items/{id}/image', [MenuController::class, 'uploadImage']);

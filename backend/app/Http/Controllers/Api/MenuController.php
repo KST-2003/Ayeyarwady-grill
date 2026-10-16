@@ -45,6 +45,13 @@ class MenuController extends Controller
         $category = Category::findOrFail($id);
         $oldValue = $category->toArray();
 
+        $validator = Validator::make($request->all(), [
+            'categoryName' => 'sometimes|required|string|max:255',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 400);
+        }
+
         $data = [];
         if ($request->has('categoryName')) {
             $data['category_name'] = $request->input('categoryName');
@@ -60,6 +67,24 @@ class MenuController extends Controller
         AuditLogger::record($request, 'update', 'categories', $category->id, $oldValue, $category->toArray());
 
         return response()->json($category);
+    }
+
+    // DELETE /api/menu/categories/{id} — admin only, and only while the
+    // category has no items (hide it instead if it still has dishes).
+    public function destroyCategory(Request $request, $id)
+    {
+        $category = Category::findOrFail($id);
+
+        if ($category->menuItems()->exists()) {
+            return response()->json(['error' => 'Remove or move this category\'s items before deleting it'], 409);
+        }
+
+        $oldValue = $category->toArray();
+        $category->delete();
+
+        AuditLogger::record($request, 'delete', 'categories', $id, $oldValue, null);
+
+        return response()->json(null, 204);
     }
 
     // POST /api/menu/categories — admin only

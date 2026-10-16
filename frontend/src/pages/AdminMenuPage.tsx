@@ -38,6 +38,9 @@ export default function AdminMenuPage() {
   const [draft, setDraft] = useState<EditDraft | null>(null);
   const [editError, setEditError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [renamingCatId, setRenamingCatId] = useState<string | null>(null);
+  const [catNameDraft, setCatNameDraft] = useState("");
+  const [catError, setCatError] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
   const rowFileInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -106,6 +109,38 @@ export default function AdminMenuPage() {
   async function toggleCategoryActive(cat: Category) {
     await api.patch(`/menu/categories/${cat.id}`, { isActive: !cat.isActive });
     refresh();
+  }
+
+  function startRenameCategory(cat: Category) {
+    setRenamingCatId(cat.id);
+    setCatNameDraft(cat.categoryName);
+    setCatError("");
+  }
+
+  async function saveCategoryName(e: FormEvent) {
+    e.preventDefault();
+    if (!renamingCatId) return;
+    if (!catNameDraft.trim()) {
+      setCatError("Name is required");
+      return;
+    }
+    try {
+      await api.patch(`/menu/categories/${renamingCatId}`, { categoryName: catNameDraft.trim() });
+      setRenamingCatId(null);
+      refresh();
+    } catch (err: any) {
+      setCatError(err?.response?.data?.error ?? "Could not rename category");
+    }
+  }
+
+  async function removeCategory(cat: Category) {
+    if (!window.confirm(`Delete category "${cat.categoryName}"?`)) return;
+    try {
+      await api.delete(`/menu/categories/${cat.id}`);
+      refresh();
+    } catch (err: any) {
+      setError(err?.response?.data?.error ?? "Could not delete category");
+    }
   }
 
   function startEdit(item: MenuItem, categoryId: string) {
@@ -265,7 +300,48 @@ export default function AdminMenuPage() {
           {categories?.map((cat) => (
             <div key={cat.id}>
               <div className="flex items-center justify-between">
-                <h3 className="font-display text-lg text-grill-brown">{cat.categoryName}</h3>
+                {renamingCatId === cat.id ? (
+                  <form onSubmit={saveCategoryName} className="flex items-center gap-2">
+                    <input
+                      value={catNameDraft}
+                      onChange={(e) => setCatNameDraft(e.target.value)}
+                      autoFocus
+                      className="rounded-md border border-grill-brown/20 bg-white px-3 py-1.5 text-sm focus:border-grill-orange focus:outline-none focus:ring-2 focus:ring-grill-orange/10"
+                    />
+                    <button title="Save" className="rounded-md p-1.5 text-grill-orange-dark hover:bg-grill-orange/10">
+                      <Check className="h-4 w-4" strokeWidth={2} />
+                    </button>
+                    <button
+                      type="button"
+                      title="Cancel"
+                      onClick={() => setRenamingCatId(null)}
+                      className="rounded-md p-1.5 text-grill-brown/40 hover:bg-grill-brown/5"
+                    >
+                      <X className="h-4 w-4" strokeWidth={2} />
+                    </button>
+                    {catError && <span className="text-xs text-red-600">{catError}</span>}
+                  </form>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <h3 className="font-display text-lg text-grill-brown">{cat.categoryName}</h3>
+                    <button
+                      onClick={() => startRenameCategory(cat)}
+                      title="Rename category"
+                      className="rounded-md p-1.5 text-grill-brown/30 hover:bg-grill-orange/10 hover:text-grill-orange-dark"
+                    >
+                      <Pencil className="h-4 w-4" strokeWidth={1.75} />
+                    </button>
+                    {cat.menuItems.length === 0 && (
+                      <button
+                        onClick={() => removeCategory(cat)}
+                        title="Delete empty category"
+                        className="rounded-md p-1.5 text-grill-brown/30 hover:bg-red-50 hover:text-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" strokeWidth={1.75} />
+                      </button>
+                    )}
+                  </div>
+                )}
                 <button
                   onClick={() => toggleCategoryActive(cat)}
                   className={`rounded-full px-2.5 py-1 text-xs font-medium ${
