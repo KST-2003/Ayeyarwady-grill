@@ -6,8 +6,8 @@
 #   ./deploy.sh --force   pull, then rebuild everything
 #
 # Called by hand over SSH, or by .github/workflows/deploy.yml on every push.
-# Only touches this app: php8.4-fpm is reloaded (graceful) and only the
-# grill-reverb Supervisor program is restarted.
+# Only touches this app: php8.4-fpm is reloaded (graceful), the grill-reverb
+# Supervisor program is restarted, and grill-queue workers are told to restart.
 
 set -euo pipefail
 
@@ -68,9 +68,12 @@ deploy_backend() {
     php artisan route:cache
     chown -R www-data:www-data storage bootstrap/cache
 
-    step "Backend: reload PHP-FPM and restart Reverb"
+    step "Backend: reload PHP-FPM, restart Reverb, restart queue workers"
     systemctl reload "$PHP_FPM_SERVICE"
     supervisorctl restart "$REVERB_PROGRAM"
+    # Tells running queue workers to exit after their current job so
+    # Supervisor restarts them on the new code. Harmless if none are running.
+    php artisan queue:restart
     cd "$APP_DIR"
 }
 

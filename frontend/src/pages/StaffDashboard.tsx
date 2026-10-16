@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, UtensilsCrossed } from "lucide-react";
 import api from "../lib/api";
 import { getStaffChannel } from "../lib/socket";
+import { playAlarm } from "../lib/alarm";
 import AdminSidebar from "../components/AdminSidebar";
 import StatusBadge from "../components/StatusBadge";
 import HorizontalBars from "../components/charts/HorizontalBars";
@@ -48,6 +49,7 @@ export default function StaffDashboard() {
 
     channel.listen(".order.new", (order: Order) => {
       setOrders((prev) => [...prev, order]);
+      playAlarm();
     });
     channel.listen(".order.status-changed", (updated: Order) => {
       setOrders((prev) =>

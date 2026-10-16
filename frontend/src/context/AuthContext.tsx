@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 import api from "../lib/api";
+import { unregisterPushSubscription } from "../lib/web-push";
 
 export type Role = "CUSTOMER" | "STAFF" | "ADMIN";
 
@@ -55,6 +56,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function logout() {
+    // Staff/admin browsers are subscribed to push — drop that subscription
+    // while the token is still valid (it's passed in, since we clear it next).
+    if (user?.role === "ADMIN" || user?.role === "STAFF") {
+      void unregisterPushSubscription(localStorage.getItem("token"));
+    }
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);

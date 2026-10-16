@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Events\PaymentProofSubmitted;
 use App\Models\Booking;
 use App\Models\BookingStatusLog;
 use App\Models\Notification;
@@ -66,6 +67,8 @@ class PaymentController extends Controller
             'message' => "Payment proof uploaded for Table {$booking->table->table_number}'s booking — needs verification.",
             'type' => 'PAYMENT_PROOF_UPLOADED',
         ]);
+
+        PaymentProofSubmitted::dispatch($booking);
 
         return response()->json($payment);
     }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\BookingCreated;
+use App\Events\BookingRequested;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\BookingStatusLog;
@@ -111,6 +112,7 @@ class BookingController extends Controller
         $booking->load(['table', 'customer', 'payments']);
 
         SafeBroadcast::send(new BookingCreated($booking));
+        BookingRequested::dispatch($booking);
 
         return response()->json($booking, 201);
     }

@@ -10,7 +10,9 @@ class SafeBroadcast
     // The underlying DB write this event announces is already committed by
     // the time we get here — a broken/unreachable broadcast server should
     // only cost the live update, never turn a successful request into a
-    // 500 for the user.
+    // 500 for the user. The events passed in implement ShouldBroadcastNow, so
+    // they are sent inline (even once a queue worker is running) and this
+    // try/catch keeps working.
     public static function send(ShouldBroadcast $event): void
     {
         try {

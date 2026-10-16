@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, X } from "lucide-react";
 import api from "../lib/api";
 import { getStaffChannel } from "../lib/socket";
+import { playAlarm } from "../lib/alarm";
 import AdminSidebar from "../components/AdminSidebar";
 import StatusBadge from "../components/StatusBadge";
 
@@ -32,6 +33,7 @@ export default function StaffBookingsPage() {
     const channel = getStaffChannel();
     channel.listen(".booking.new", (booking: Booking) => {
       setBookings((prev) => [booking, ...prev.filter((b) => b.id !== booking.id)]);
+      playAlarm();
     });
 
     return () => {

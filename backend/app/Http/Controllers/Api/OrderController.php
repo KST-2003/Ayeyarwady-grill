@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\NewOrderPlaced;
 use App\Events\OrderCreated;
 use App\Events\OrderStatusChanged;
 use App\Events\TableStatusChanged;
@@ -93,6 +94,8 @@ class OrderController extends Controller
                 : 'New walk-in order placed.',
             'type' => 'NEW_ORDER',
         ]);
+
+        NewOrderPlaced::dispatch($order);
 
         return response()->json($order, 201);
     }

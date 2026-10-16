@@ -6,6 +6,14 @@ return [
 
     'connections' => [
 
+        // Used by the PHPUnit suite (see phpunit.xml).
+        'sqlite' => [
+            'driver' => 'sqlite',
+            'database' => env('DB_DATABASE', ':memory:'),
+            'prefix' => '',
+            'foreign_key_constraints' => true,
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL'),

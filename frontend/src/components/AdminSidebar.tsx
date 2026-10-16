@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Bell,
+  BellRing,
   BookText,
   CalendarCheck,
   ClipboardList,
@@ -14,6 +16,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { isWebPushSupported, registerPushSubscription } from "../lib/web-push";
 
 const STAFF_NAV = [
   { label: "Overview", to: "/staff", icon: LayoutDashboard },
@@ -35,6 +38,19 @@ const ADMIN_NAV = [
 export default function AdminSidebar({ active }: { active: string }) {
   const { user, logout } = useAuth();
   const isAdmin = user?.role === "ADMIN";
+  const [pushPermission, setPushPermission] = useState<NotificationPermission | "unsupported">(
+    isWebPushSupported() ? Notification.permission : "unsupported"
+  );
+
+  // Already allowed in this browser: quietly re-sync the subscription.
+  useEffect(() => {
+    if (pushPermission === "granted") void registerPushSubscription();
+  }, [pushPermission]);
+
+  async function enablePush() {
+    await registerPushSubscription({ prompt: true });
+    setPushPermission(Notification.permission);
+  }
   const initials = (user?.name ?? "?")
     .split(" ")
     .map((part) => part[0])
@@ -109,13 +125,30 @@ export default function AdminSidebar({ active }: { active: string }) {
         )}
       </nav>
 
+      <div className="mt-auto space-y-1">
+      {pushPermission === "default" && (
+        <button
+          onClick={enablePush}
+          className="flex w-full items-center gap-3 rounded-lg border border-grill-orange/30 bg-grill-orange/10 px-3 py-2.5 text-sm text-grill-orange-light transition-colors hover:bg-grill-orange/20"
+        >
+          <BellRing className="h-4 w-4" strokeWidth={1.75} />
+          Enable notifications
+        </button>
+      )}
+      {pushPermission === "denied" && (
+        <p className="px-3 pb-1 text-xs text-white/30">
+          Browser notifications are blocked — allow them in your browser's site settings.
+        </p>
+      )}
+
       <button
         onClick={logout}
-        className="mt-auto flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/40 transition-colors hover:bg-white/5 hover:text-white/70"
+        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/40 transition-colors hover:bg-white/5 hover:text-white/70"
       >
         <LogOut className="h-4 w-4" strokeWidth={1.75} />
         Logout
       </button>
+      </div>
     </aside>
   );
 }

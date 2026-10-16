@@ -157,3 +157,20 @@ Same droplet shape as the Node version, adapted for PHP:
    request/response cycle.
 4. Set `REVERB_HOST`/`REVERB_PORT`/`APP_URL`/`CLIENT_URL` to your real
    domain, and point the frontend's `VITE_API_URL`/`VITE_REVERB_*` at it.
+
+
+## Browser push notifications (staff + admin)
+
+Staff and admin browsers get OS-level notifications for new orders, new booking
+requests and uploaded payment proofs — even with the dashboard tab closed.
+
+- **Add a new notification type:** create an event that implements
+  `App\Contracts\SendsWebPush` (declare the roles and the payload) and
+  dispatch it. The queued `SendWebPushNotification` listener is auto-discovered;
+  nothing else needs registering.
+- **Env:** `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`. Generate keys
+  with `npx web-push generate-vapid-keys`.
+- **Queue:** production runs `QUEUE_CONNECTION=database` with the Supervisor
+  program in `deploy/supervisor-grill-queue.conf`. `deploy.sh` runs
+  `queue:restart` on every deploy.
+- **Tests:** `cd backend && vendor/bin/phpunit`.

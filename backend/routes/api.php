@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\OverviewController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PaymentMethodController;
+use App\Http\Controllers\Api\PushSubscriptionController;
 use App\Http\Controllers\Api\StaffController;
 use App\Http\Controllers\Api\TableController;
 use Illuminate\Support\Facades\Route;
@@ -102,6 +103,13 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notifications/mine', [NotificationController::class, 'mine']);
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markRead']);
+});
+
+// ── Browser push notifications (staff + admin) ─────────────────────────
+Route::middleware(['auth:sanctum', 'role:admin,staff'])->group(function () {
+    Route::get('/push/public-key', [PushSubscriptionController::class, 'publicKey']);
+    Route::post('/push/subscriptions', [PushSubscriptionController::class, 'store']);
+    Route::delete('/push/subscriptions', [PushSubscriptionController::class, 'destroy']);
 });
 
 // ── Overview (dashboard stat cards) ─────────────────────────────────────

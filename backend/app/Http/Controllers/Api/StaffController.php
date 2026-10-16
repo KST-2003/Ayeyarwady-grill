@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\AttendanceType;
+use App\Models\PushSubscription;
 use App\Models\Staff;
 use App\Models\StaffRole;
 use App\Support\AuditLogger;
@@ -144,6 +145,9 @@ class StaffController extends Controller
         // Sign the person out everywhere so old credentials stop working.
         if ($credentialsChanged) {
             $staff->tokens()->delete();
+        }
+        if ($credentialsChanged || ($request->has('isActive') && ! $request->boolean('isActive'))) {
+            PushSubscription::where('user_type', 'STAFF')->where('user_id', $staff->id)->delete();
         }
 
         AuditLogger::record($request, 'update', 'staff', $staff->id, $oldValue, $staff->toArray());
