@@ -67,7 +67,7 @@ export default function AdminStaffPage() {
         </p>
         <h1 className="mt-1 font-display text-3xl text-grill-brown">Staff Accounts</h1>
         <p className="mt-2 text-sm text-grill-brown/50">
-          Create accounts for waiters and managers. Deactivate an account instead of deleting it
+          Create admin and staff accounts. Deactivate an account instead of deleting it
           to preserve its order/booking history.
         </p>
 

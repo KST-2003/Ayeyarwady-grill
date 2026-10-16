@@ -23,13 +23,13 @@ class DatabaseSeeder extends Seeder
         $this->command->info('Seeding database...');
 
         // Roles
-        $managerRole = StaffRole::firstOrCreate(
-            ['role_name' => 'Manager'],
+        $adminRole = StaffRole::firstOrCreate(
+            ['role_name' => 'Admin'],
             ['description' => 'Full staff permissions', 'permissions' => 'all']
         );
-        $waiterRole = StaffRole::firstOrCreate(
-            ['role_name' => 'Waiter'],
-            ['description' => 'Table service', 'permissions' => 'orders,tables']
+        $staffRole = StaffRole::firstOrCreate(
+            ['role_name' => 'Staff'],
+            ['description' => 'Takes orders and serves tables', 'permissions' => 'orders,tables']
         );
 
         // Accounts — same password for all demo accounts: "password123"
@@ -45,7 +45,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Thiha Aung',
                 'password' => $password,
-                'role_id' => $waiterRole->id,
+                'role_id' => $staffRole->id,
                 'managed_by_admin_id' => $admin->id,
             ]
         );

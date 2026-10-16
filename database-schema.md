@@ -22,7 +22,7 @@ infrastructure table added by Laravel Sanctum = **22 tables total**.
 | Column | Type | Notes |
 |---|---|---|
 | id | bigint, PK | |
-| role_name | string | unique — e.g. Manager, Waiter |
+| role_name | string | unique — e.g. Admin, Staff |
 | description | string | nullable |
 | permissions | string | nullable |
 | created_at, updated_at | timestamp | |
