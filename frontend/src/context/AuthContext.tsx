@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 import api from "../lib/api";
 import { unregisterPushSubscription } from "../lib/web-push";
+import { disconnectEcho } from "../lib/socket";
 
 export type Role = "CUSTOMER" | "STAFF" | "ADMIN";
 
@@ -61,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user?.role === "ADMIN" || user?.role === "STAFF") {
       void unregisterPushSubscription(localStorage.getItem("token"));
     }
+    disconnectEcho();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);

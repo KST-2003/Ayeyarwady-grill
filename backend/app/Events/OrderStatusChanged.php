@@ -3,13 +3,13 @@
 namespace App\Events;
 
 use App\Models\Order;
-use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-// Broadcast to the shared 'staff-room' channel — mirrors the Node/Socket.io
+// Broadcast to the private 'staff-room' channel (staff + admin only, see routes/channels.php) — mirrors the Node/Socket.io
 // STAFF_ROOM concept. Every connected staff/admin dashboard listens here.
 class OrderStatusChanged implements ShouldBroadcastNow
 {
@@ -19,7 +19,7 @@ class OrderStatusChanged implements ShouldBroadcastNow
 
     public function broadcastOn(): array
     {
-        return [new Channel('staff-room')];
+        return [new PrivateChannel('staff-room')];
     }
 
     // Sends the order's own (already camelCase, via CamelCaseAttributes)
