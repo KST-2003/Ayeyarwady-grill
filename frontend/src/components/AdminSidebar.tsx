@@ -5,6 +5,7 @@ import {
   CalendarCheck,
   ClipboardList,
   Coffee,
+  Contact,
   History,
   LayoutDashboard,
   LogOut,
@@ -25,6 +26,7 @@ const STAFF_NAV = [
 const ADMIN_NAV = [
   { label: "Menu", to: "/admin/menu", icon: UtensilsCrossed },
   { label: "Tables & QR", to: "/admin/tables", icon: BookText },
+  { label: "Customers", to: "/admin/customers", icon: Contact },
   { label: "Staff Accounts", to: "/admin/staff", icon: Users },
   { label: "Payment Methods", to: "/admin/payment-methods", icon: Wallet },
   { label: "Audit Log", to: "/admin/audit-log", icon: History },

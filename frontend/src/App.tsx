@@ -16,6 +16,7 @@ import StaffNotificationsPage from "./pages/StaffNotificationsPage";
 import AdminAttendancePage from "./pages/AdminAttendancePage";
 import AdminMenuPage from "./pages/AdminMenuPage";
 import AdminTablesPage from "./pages/AdminTablesPage";
+import AdminCustomersPage from "./pages/AdminCustomersPage";
 import AdminStaffPage from "./pages/AdminStaffPage";
 import AdminPaymentMethodsPage from "./pages/AdminPaymentMethodsPage";
 import AdminAuditLogPage from "./pages/AdminAuditLogPage";
@@ -123,6 +124,14 @@ export default function App() {
         element={
           <ProtectedRoute allow={["ADMIN"]}>
             <AdminTablesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/customers"
+        element={
+          <ProtectedRoute allow={["ADMIN"]}>
+            <AdminCustomersPage />
           </ProtectedRoute>
         }
       />
