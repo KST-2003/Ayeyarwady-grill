@@ -11,6 +11,7 @@ use App\Support\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class StaffController extends Controller
 {
@@ -105,6 +106,10 @@ class StaffController extends Controller
         $validator = Validator::make($request->all(), [
             'isActive' => 'sometimes|boolean',
             'roleId' => 'sometimes|exists:staff_roles,id',
+            'name' => 'sometimes|required|string|max:255',
+            'email' => ['sometimes', 'required', 'email', Rule::unique('staff', 'email')->ignore($id)],
+            'phone' => 'sometimes|nullable|string|max:50',
+            'password' => 'sometimes|required|string|min:6',
         ]);
 
         if ($validator->fails()) {
@@ -121,7 +126,25 @@ class StaffController extends Controller
         if ($request->has('roleId')) {
             $data['role_id'] = $request->input('roleId');
         }
+        foreach (['name', 'email', 'phone'] as $field) {
+            if ($request->has($field)) {
+                $data[$field] = $request->input($field);
+            }
+        }
+        $credentialsChanged = false;
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->input('password'));
+            $credentialsChanged = true;
+        }
+        if ($request->has('email') && $request->input('email') !== $staff->email) {
+            $credentialsChanged = true;
+        }
         $staff->update($data);
+
+        // Sign the person out everywhere so old credentials stop working.
+        if ($credentialsChanged) {
+            $staff->tokens()->delete();
+        }
 
         AuditLogger::record($request, 'update', 'staff', $staff->id, $oldValue, $staff->toArray());
 

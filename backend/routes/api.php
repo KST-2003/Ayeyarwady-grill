@@ -63,7 +63,10 @@ Route::middleware(['auth:sanctum', 'role:staff,admin'])->group(function () {
     Route::patch('/payments/{id}/verify', [PaymentController::class, 'verify']);
 });
 
-Route::middleware(['auth:sanctum', 'role:admin'])->get('/customers', [CustomerController::class, 'index']);
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('/customers', [CustomerController::class, 'index']);
+    Route::patch('/customers/{id}', [CustomerController::class, 'update']);
+});
 
 // ── Orders ────────────────────────────────────────────────────────────
 // Creating an order is open to a logged-in customer OR a guest who just

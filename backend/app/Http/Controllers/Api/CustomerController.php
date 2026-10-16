@@ -6,7 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\Payment;
+use App\Support\AuditLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class CustomerController extends Controller
 {
@@ -73,5 +77,47 @@ class CustomerController extends Controller
         });
 
         return response()->json($rows->values());
+    }
+
+    // PATCH /api/customers/{id} — admin only: fix contact details, reset
+    // email / password, or deactivate. Changing email or password signs the
+    // customer out everywhere.
+    public function update(Request $request, $id)
+    {
+        $customer = Customer::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|required|string|max:255',
+            'email' => ['sometimes', 'required', 'email', Rule::unique('customers', 'email')->ignore($customer->id)],
+            'phone' => 'sometimes|nullable|string|max:50',
+            'password' => 'sometimes|required|string|min:6',
+            'isActive' => 'sometimes|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 400);
+        }
+
+        $oldValue = $customer->toArray();
+
+        $data = $request->only(['name', 'email', 'phone']);
+        if ($request->has('isActive')) {
+            $data['is_active'] = $request->boolean('isActive');
+        }
+        $credentialsChanged = $request->has('email') && $request->input('email') !== $customer->email;
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->input('password'));
+            $credentialsChanged = true;
+        }
+
+        $customer->update($data);
+
+        if ($credentialsChanged) {
+            $customer->tokens()->delete();
+        }
+
+        AuditLogger::record($request, 'update', 'customers', $customer->id, $oldValue, $customer->toArray());
+
+        return response()->json($customer);
     }
 }

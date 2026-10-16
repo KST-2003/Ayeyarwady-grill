@@ -1,7 +1,8 @@
 import { useEffect, useState, FormEvent } from "react";
-import { Mail, Phone, UserPlus } from "lucide-react";
+import { KeyRound, Mail, Phone, UserPlus } from "lucide-react";
 import api from "../lib/api";
 import AdminSidebar from "../components/AdminSidebar";
+import EditAccountModal from "../components/EditAccountModal";
 
 interface StaffMember {
   id: string;
@@ -24,6 +25,7 @@ export default function AdminStaffPage() {
   const [roleId, setRoleId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [editing, setEditing] = useState<StaffMember | null>(null);
 
   function refresh() {
     api.get("/staff").then((res) => setStaff(res.data));
@@ -152,6 +154,13 @@ export default function AdminStaffPage() {
               >
                 {s.isActive ? "Active" : "Inactive"}
               </button>
+              <button
+                onClick={() => setEditing(s)}
+                title="Edit details / reset login"
+                className="shrink-0 rounded-md p-1.5 text-grill-brown/30 hover:bg-grill-orange/10 hover:text-grill-orange-dark"
+              >
+                <KeyRound className="h-4 w-4" strokeWidth={1.75} />
+              </button>
             </div>
           ))}
           {staff?.length === 0 && (
@@ -159,6 +168,18 @@ export default function AdminStaffPage() {
           )}
         </div>
       </main>
+      {editing && (
+        <EditAccountModal
+          endpoint={`/staff/${editing.id}`}
+          title={`Edit ${editing.name}`}
+          account={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null);
+            refresh();
+          }}
+        />
+      )}
     </div>
   );
 }

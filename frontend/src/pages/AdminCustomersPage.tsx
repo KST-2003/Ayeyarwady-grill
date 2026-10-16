@@ -1,7 +1,8 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, KeyRound, Search } from "lucide-react";
 import api from "../lib/api";
 import AdminSidebar from "../components/AdminSidebar";
+import EditAccountModal from "../components/EditAccountModal";
 
 interface CustomerRow {
   id: string;
@@ -25,9 +26,14 @@ export default function AdminCustomersPage() {
   const [customers, setCustomers] = useState<CustomerRow[] | null>(null);
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<CustomerRow | null>(null);
+
+  function refresh() {
+    api.get("/customers").then((res) => setCustomers(res.data));
+  }
 
   useEffect(() => {
-    api.get("/customers").then((res) => setCustomers(res.data));
+    refresh();
   }, []);
 
   const filtered = useMemo(() => {
@@ -133,6 +139,13 @@ export default function AdminCustomersPage() {
                     {open && (
                       <tr className="bg-cream/60">
                         <td colSpan={7} className="px-5 py-4 pl-11">
+                          <button
+                            onClick={() => setEditing(c)}
+                            className="mb-3 flex items-center gap-1.5 rounded-md border border-grill-brown/20 bg-white px-3 py-1.5 text-xs font-medium text-grill-brown/70 hover:bg-grill-brown/5"
+                          >
+                            <KeyRound className="h-3.5 w-3.5" strokeWidth={1.75} />
+                            Edit details / reset login
+                          </button>
                           <p className="text-xs font-medium text-grill-brown/60">
                             Visit dates ({c.visitCount}) · {c.bookingCount} booking
                             {c.bookingCount === 1 ? "" : "s"}
@@ -168,6 +181,18 @@ export default function AdminCustomersPage() {
           </table>
         </div>
       </main>
+      {editing && (
+        <EditAccountModal
+          endpoint={`/customers/${editing.id}`}
+          title={`Edit ${editing.name}`}
+          account={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null);
+            refresh();
+          }}
+        />
+      )}
     </div>
   );
 }
