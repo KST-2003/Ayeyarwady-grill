@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BillController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\MenuController;
@@ -41,9 +42,14 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
 // ── Tables ────────────────────────────────────────────────────────────
 Route::get('/tables/verify-qr', [TableController::class, 'verifyQr']); // public
+Route::get('/tables/bill', [BillController::class, 'show']); // public, QR token
+Route::post('/tables/check-bill', [BillController::class, 'request']); // public, QR token
 Route::middleware(['auth:sanctum', 'role:staff,admin'])->group(function () {
     Route::get('/tables', [TableController::class, 'index']);
     Route::patch('/tables/{id}/status', [TableController::class, 'updateStatus']);
+    Route::get('/tables/{id}/bill', [BillController::class, 'showForStaff']);
+    Route::post('/tables/{id}/bill/pay', [BillController::class, 'pay']);
+    Route::get('/payments/orders', [BillController::class, 'collected']);
 });
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('/tables', [TableController::class, 'store']);

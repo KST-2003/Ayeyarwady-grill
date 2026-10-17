@@ -14,9 +14,13 @@ class Order extends Model
 
     protected $fillable = [
         'table_id', 'customer_id', 'staff_id', 'is_walkin',
-        'status', 'total_amount', 'special_instructions',
+        'status', 'total_amount', 'special_instructions', 'bill_requested_at',
     ];
-    protected $casts = ['is_walkin' => 'boolean', 'total_amount' => 'decimal:2'];
+    protected $casts = [
+        'is_walkin' => 'boolean',
+        'total_amount' => 'decimal:2',
+        'bill_requested_at' => 'datetime',
+    ];
 
     public function table(): BelongsTo
     {

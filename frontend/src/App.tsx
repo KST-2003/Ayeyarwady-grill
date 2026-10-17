@@ -10,6 +10,7 @@ import ProfilePage from "./pages/ProfilePage";
 import BookTablePage from "./pages/BookTablePage";
 import QrOrderPage from "./pages/QrOrderPage";
 import AdminOverviewPage from "./pages/AdminOverviewPage";
+import CashierPage from "./pages/CashierPage";
 import StaffDashboard from "./pages/StaffDashboard";
 import StaffBookingsPage from "./pages/StaffBookingsPage";
 import StaffNotificationsPage from "./pages/StaffNotificationsPage";
@@ -84,6 +85,22 @@ export default function App() {
         element={
           <ProtectedRoute allow={["STAFF", "ADMIN"]}>
             <StaffDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/staff/cashier"
+        element={
+          <ProtectedRoute allow={["STAFF", "ADMIN"]}>
+            <CashierPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/staff/cashier/:tableId"
+        element={
+          <ProtectedRoute allow={["STAFF", "ADMIN"]}>
+            <CashierPage />
           </ProtectedRoute>
         }
       />

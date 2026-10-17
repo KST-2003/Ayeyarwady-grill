@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarCheck, Coffee, CreditCard, Table2, Users } from "lucide-react";
+import { Banknote, CalendarCheck, Coffee, CreditCard, Table2, Users } from "lucide-react";
 import api from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import AdminSidebar from "../components/AdminSidebar";
+import Pagination, { usePagination } from "../components/Pagination";
 import ColumnChart from "../components/charts/ColumnChart";
 import HorizontalBars from "../components/charts/HorizontalBars";
 import StackedShareBar from "../components/charts/StackedShareBar";
@@ -16,6 +17,16 @@ interface Overview {
   occupiedTables: number;
   totalTables: number;
   totalStaff: number;
+  collectedToday: number;
+  tablesToCollect: number;
+}
+
+interface CollectedPayment {
+  paidAt: string;
+  tableNumber: number | null;
+  method: string | null;
+  orderIds: (string | number)[];
+  amount: number;
 }
 
 interface Analytics {
@@ -66,6 +77,12 @@ const CARDS: {
   suffix?: (data: Overview) => string;
 }[] = [
   {
+    key: "tablesToCollect",
+    label: "Tables to collect",
+    icon: Banknote,
+    to: "/staff/cashier",
+  },
+  {
     key: "pendingPayments",
     label: "Payments awaiting review",
     icon: CreditCard,
@@ -97,10 +114,13 @@ export default function AdminOverviewPage() {
   const isAdmin = user?.role === "ADMIN";
   const [data, setData] = useState<Overview | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [payments, setPayments] = useState<CollectedPayment[] | null>(null);
+  const paymentsPager = usePagination(payments, 8);
 
   useEffect(() => {
     api.get("/overview").then((res) => setData(res.data));
     api.get("/overview/analytics").then((res) => setAnalytics(res.data));
+    api.get("/payments/orders").then((res) => setPayments(res.data));
   }, []);
 
   return (
@@ -118,7 +138,7 @@ export default function AdminOverviewPage() {
           A snapshot of what needs attention right now.
         </p>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {CARDS.map((card) => {
             const Icon = card.icon;
             const value = data ? data[card.key] : null;
@@ -269,6 +289,70 @@ export default function AdminOverviewPage() {
               <p className="py-10 text-center text-sm text-grill-brown/40">Loading…</p>
             )}
           </div>
+        </div>
+
+        <div className="mt-4 overflow-hidden rounded-2xl border border-grill-brown/10 bg-white shadow-sm">
+          <div className="flex flex-wrap items-end justify-between gap-3 p-5">
+            <div>
+              <h2 className="font-display text-base text-grill-brown">Payments collected</h2>
+              <p className="text-xs text-grill-brown/40">Table bills confirmed at the counter, newest first</p>
+            </div>
+            <div className="text-right">
+              <p className="font-display text-2xl text-grill-brown">{data ? mmk(data.collectedToday) : "—"}</p>
+              <p className="text-xs text-grill-brown/50">Collected today</p>
+            </div>
+          </div>
+          <table className="w-full text-left text-sm">
+            <thead className="border-y border-grill-brown/10 text-xs uppercase tracking-wider text-grill-brown/40">
+              <tr>
+                <th className="px-5 py-3 font-medium">Date</th>
+                <th className="px-3 py-3 font-medium">Table</th>
+                <th className="px-3 py-3 font-medium">Orders</th>
+                <th className="px-3 py-3 font-medium">Method</th>
+                <th className="px-5 py-3 text-right font-medium">Amount</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-grill-brown/5">
+              {paymentsPager.pageItems?.map((p) => (
+                <tr key={`${p.paidAt}-${p.orderIds.join("-")}`}>
+                  <td className="whitespace-nowrap px-5 py-3 text-grill-brown/70">
+                    {new Date(p.paidAt).toLocaleString(undefined, {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </td>
+                  <td className="px-3 py-3 text-grill-brown">{p.tableNumber ?? "—"}</td>
+                  <td className="px-3 py-3 text-grill-brown/60">{p.orderIds.map((id) => `#${id}`).join(", ")}</td>
+                  <td className="px-3 py-3 text-grill-brown/70">{p.method ?? "—"}</td>
+                  <td className="px-5 py-3 text-right font-medium text-grill-brown">{mmk(p.amount)}</td>
+                </tr>
+              ))}
+              {payments?.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-10 text-center text-sm text-grill-brown/40">
+                    No payments collected yet
+                  </td>
+                </tr>
+              )}
+              {payments === null && (
+                <tr>
+                  <td colSpan={5} className="py-10 text-center text-sm text-grill-brown/40">
+                    Loading…
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          <Pagination
+            page={paymentsPager.page}
+            pageCount={paymentsPager.pageCount}
+            total={paymentsPager.total}
+            pageSize={paymentsPager.pageSize}
+            onChange={paymentsPager.setPage}
+          />
         </div>
 
         {isAdmin && (

@@ -8,6 +8,7 @@ use App\Models\DiningTable;
 use App\Models\QrCode as QrCodeModel;
 use App\Support\AuditLogger;
 use App\Support\SafeBroadcast;
+use App\Support\TableBill;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -44,7 +45,9 @@ class TableController extends Controller
 
         $tables = DiningTable::with(['section', 'qrCode'])
             ->orderBy('table_number')
-            ->get();
+            ->get()
+            // amountDue / billRequested: drives the "Collect Money" badge.
+            ->map(fn (DiningTable $t) => $t->toArray() + TableBill::summary($t));
 
         return response()->json($tables);
     }

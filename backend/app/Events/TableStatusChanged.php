@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\DiningTable;
+use App\Support\TableBill;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -24,7 +25,8 @@ class TableStatusChanged implements ShouldBroadcastNow
 
     public function broadcastWith(): array
     {
-        return $this->table->toArray();
+        // amountDue / billRequested drive the "Collect Money" badge live.
+        return $this->table->toArray() + TableBill::summary($this->table);
     }
 
     public function broadcastAs(): string

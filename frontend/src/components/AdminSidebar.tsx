@@ -6,6 +6,7 @@ import {
   BookText,
   CalendarCheck,
   ClipboardList,
+  Banknote,
   Coffee,
   Contact,
   History,
@@ -21,6 +22,7 @@ import { isWebPushSupported, registerPushSubscription } from "../lib/web-push";
 const STAFF_NAV = [
   { label: "Overview", to: "/staff", icon: LayoutDashboard },
   { label: "Live Orders", to: "/staff/orders", icon: Coffee },
+  { label: "Cashier", to: "/staff/cashier", icon: Banknote },
   { label: "Bookings & Deposits", to: "/staff/bookings", icon: CalendarCheck },
   { label: "Attendance", to: "/staff/attendance", icon: ClipboardList },
   { label: "Notifications", to: "/staff/notifications", icon: Bell },

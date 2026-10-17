@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, FormEvent } from "react";
-import { Plus, QrCode, Users } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Banknote, Plus, QrCode, Users } from "lucide-react";
 import api from "../lib/api";
 import AdminSidebar from "../components/AdminSidebar";
 import { getStaffChannel } from "../lib/socket";
@@ -9,6 +10,8 @@ interface Table {
   tableNumber: number;
   capacity: number;
   status: string;
+  billRequested?: boolean;
+  amountDue?: number;
   section: { id: string; sectionName: string };
   qrCode?: { token: string };
 }
@@ -43,7 +46,7 @@ export default function AdminTablesPage() {
   // into the row we already have, and reload if it is a table we don't know.
   useEffect(() => {
     const channel = getStaffChannel();
-    channel.listen(".table.status-changed", (updated: { id: string | number; status: string; capacity?: number }) => {
+    channel.listen(".table.status-changed", (updated: { id: string | number; status: string; capacity?: number; billRequested?: boolean; amountDue?: number }) => {
       setTables((prev) => {
         if (!prev) return prev;
         if (!prev.some((t) => String(t.id) === String(updated.id))) {
@@ -52,7 +55,13 @@ export default function AdminTablesPage() {
         }
         return prev.map((t) =>
           String(t.id) === String(updated.id)
-            ? { ...t, status: updated.status, capacity: updated.capacity ?? t.capacity }
+            ? {
+                ...t,
+                status: updated.status,
+                capacity: updated.capacity ?? t.capacity,
+                billRequested: updated.billRequested ?? false,
+                amountDue: updated.amountDue ?? 0,
+              }
             : t
         );
       });
@@ -183,6 +192,16 @@ export default function AdminTablesPage() {
                 <Users className="h-3 w-3" strokeWidth={1.75} />
                 Seats {t.capacity}
               </p>
+
+              {t.billRequested && (
+                <Link
+                  to={`/staff/cashier/${t.id}`}
+                  className="mt-3 flex items-center justify-center gap-1.5 rounded-md bg-grill-orange px-2.5 py-2 text-xs font-medium text-white hover:bg-grill-orange-dark"
+                >
+                  <Banknote className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  Collect Money · {(t.amountDue ?? 0).toLocaleString()} MMK
+                </Link>
+              )}
 
               <select
                 value={t.status}

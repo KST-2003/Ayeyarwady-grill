@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Clock, Flame, Minus, Plus, ShoppingBag, UtensilsCrossed, X } from "lucide-react";
+import { Clock, Flame, Minus, Plus, Printer, Receipt, ShoppingBag, UtensilsCrossed, X } from "lucide-react";
 import api from "../lib/api";
 import StatusBadge from "../components/StatusBadge";
 import { useAuth } from "../context/AuthContext";
+import BillReceipt, { Bill } from "../components/BillReceipt";
 
 interface MenuItem {
   id: string;
@@ -87,6 +88,10 @@ export default function QrOrderPage() {
   const [placing, setPlacing] = useState(false);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [bill, setBill] = useState<Bill | null>(null);
+  const [billPrompt, setBillPrompt] = useState(false);
+  const [billBusy, setBillBusy] = useState(false);
+  const [billError, setBillError] = useState("");
   const [guestChosen, setGuestChosen] = useState(() => isGuestChosen(searchParams.get("table")));
 
   useEffect(() => {
@@ -103,6 +108,30 @@ export default function QrOrderPage() {
       .then((res) => setTableId(res.data.tableId))
       .catch(() => setVerifyError("This QR code is invalid or has expired. Please ask staff for help."));
   }, [tableNumber, token]);
+
+  // A diner who already asked for the bill (and reloaded) goes straight back to it.
+  useEffect(() => {
+    if (!tableId || !tableNumber || !token) return;
+    api
+      .get("/tables/bill", { params: { table: tableNumber, token } })
+      .then((res) => setBill(res.data.bill))
+      .catch(() => {});
+  }, [tableId, tableNumber, token]);
+
+  async function requestBill() {
+    setBillBusy(true);
+    setBillError("");
+    try {
+      const { data } = await api.post("/tables/check-bill", { table: tableNumber, token });
+      setBill(data.bill);
+      setBillPrompt(false);
+      setReceipt(null);
+    } catch (err: any) {
+      setBillError(err?.response?.data?.error ?? "Could not get the bill. Please ask our staff.");
+    } finally {
+      setBillBusy(false);
+    }
+  }
 
   function setQuantity(item: MenuItem, quantity: number) {
     setCart((prev) => {
@@ -138,6 +167,13 @@ export default function QrOrderPage() {
       if (tableNumber) addStoredOrderId(tableNumber, String(data.id));
       setCart({});
       setCartOpen(false);
+    } catch (err: any) {
+      // The table's bill was requested (maybe from another phone) — show it.
+      if (err?.response?.status === 409 && tableNumber && token) {
+        const res = await api.get("/tables/bill", { params: { table: tableNumber, token } });
+        setBill(res.data.bill);
+        setCartOpen(false);
+      }
     } finally {
       setPlacing(false);
     }
@@ -218,6 +254,10 @@ export default function QrOrderPage() {
     );
   }
 
+  if (bill) {
+    return <BillView bill={bill} tableNumber={tableNumber} token={token} />;
+  }
+
   if (receipt) {
     return (
       <>
@@ -226,7 +266,11 @@ export default function QrOrderPage() {
           tableNumber={tableNumber}
           onOrderMore={orderMore}
           onViewHistory={() => setHistoryOpen(true)}
+          onCheckBill={() => setBillPrompt(true)}
         />
+        {billPrompt && (
+          <BillPrompt busy={billBusy} error={billError} onConfirm={requestBill} onCancel={() => setBillPrompt(false)} />
+        )}
         {historyOpen && (
           <HistoryDrawer tableId={tableId} tableNumber={tableNumber} onClose={() => setHistoryOpen(false)} />
         )}
@@ -253,6 +297,15 @@ export default function QrOrderPage() {
               <Clock className="h-3.5 w-3.5" strokeWidth={2} />
               History
             </button>
+            {getStoredOrderIds(tableNumber).length > 0 && (
+              <button
+                onClick={() => setBillPrompt(true)}
+                className="flex items-center gap-1.5 rounded-full bg-grill-orange px-3 py-1.5 text-xs font-medium text-white hover:bg-grill-orange-dark"
+              >
+                <Receipt className="h-3.5 w-3.5" strokeWidth={2} />
+                Check bill
+              </button>
+            )}
             <Flame className="h-6 w-6 text-grill-orange" strokeWidth={1.75} />
           </div>
         </div>
@@ -437,6 +490,9 @@ export default function QrOrderPage() {
       {historyOpen && (
         <HistoryDrawer tableId={tableId} tableNumber={tableNumber} onClose={() => setHistoryOpen(false)} />
       )}
+      {billPrompt && (
+        <BillPrompt busy={billBusy} error={billError} onConfirm={requestBill} onCancel={() => setBillPrompt(false)} />
+      )}
     </div>
   );
 }
@@ -537,11 +593,13 @@ function ReceiptView({
   tableNumber,
   onOrderMore,
   onViewHistory,
+  onCheckBill,
 }: {
   receipt: Receipt;
   tableNumber: string;
   onOrderMore: () => void;
   onViewHistory: () => void;
+  onCheckBill: () => void;
 }) {
   const placedAt = new Date(receipt.createdAt).toLocaleString(undefined, {
     dateStyle: "medium",
@@ -595,12 +653,98 @@ function ReceiptView({
         Order more
       </button>
       <button
+        onClick={onCheckBill}
+        className="mt-3 flex w-full max-w-sm items-center justify-center gap-1.5 rounded-md border border-grill-brown/20 py-3 text-sm font-medium text-grill-brown hover:bg-grill-brown/5"
+      >
+        <Receipt className="h-4 w-4" strokeWidth={1.75} />
+        Check bill
+      </button>
+      <button
         onClick={onViewHistory}
         className="mt-3 flex w-full max-w-sm items-center justify-center gap-1.5 rounded-md py-2 text-sm font-medium text-grill-brown/60 hover:text-grill-brown"
       >
         <Clock className="h-3.5 w-3.5" strokeWidth={2} />
         View order history
       </button>
+    </div>
+  );
+}
+
+function BillPrompt({
+  busy,
+  error,
+  onConfirm,
+  onCancel,
+}: {
+  busy: boolean;
+  error: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-5">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl">
+        <Receipt className="mx-auto h-7 w-7 text-grill-orange" strokeWidth={1.75} />
+        <h2 className="mt-2 font-display text-lg text-grill-brown">Ready for the bill?</h2>
+        <p className="mt-1 text-sm text-grill-brown/60">
+          This ends your order for this table. You will get a receipt to pay at the counter, and you
+          won&apos;t be able to add more food.
+        </p>
+        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+        <button
+          onClick={onConfirm}
+          disabled={busy}
+          className="mt-5 w-full rounded-md bg-grill-orange py-3 text-sm font-medium text-white hover:bg-grill-orange-dark disabled:opacity-60"
+        >
+          {busy ? "Getting your bill…" : "Yes, check bill"}
+        </button>
+        <button onClick={onCancel} className="mt-2 w-full rounded-md py-2 text-sm text-grill-brown/60 hover:text-grill-brown">
+          Keep ordering
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// The diner's receipt. Checks every few seconds whether the cashier has taken
+// payment yet, and switches to a thank-you once the bill is settled.
+function BillView({ bill, tableNumber, token }: { bill: Bill; tableNumber: string; token: string }) {
+  const [paid, setPaid] = useState(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      api
+        .get("/tables/bill", { params: { table: tableNumber, token } })
+        .then((res) => {
+          if (!res.data.bill) setPaid(true);
+        })
+        .catch(() => {});
+    }, 8000);
+    return () => clearInterval(timer);
+  }, [tableNumber, token]);
+
+  return (
+    <div className="flex min-h-screen flex-col items-center bg-cream px-5 py-10 print:bg-white print:p-0">
+      <BillReceipt
+        bill={bill}
+        footer={
+          paid ? (
+            <span className="font-medium text-emerald-700">Payment received — thank you! See you again 🔥</span>
+          ) : (
+            <span className="font-medium">Please pay at the counter.</span>
+          )
+        }
+      />
+      <button
+        onClick={() => window.print()}
+        className="mt-6 flex w-full max-w-sm items-center justify-center gap-1.5 rounded-md bg-grill-orange py-3 text-sm font-medium text-white hover:bg-grill-orange-dark print:hidden"
+      >
+        <Printer className="h-4 w-4" strokeWidth={1.75} />
+        Print receipt
+      </button>
+      <p className="mt-3 max-w-sm text-center text-xs text-grill-brown/40 print:hidden">
+        Need to change something? Ask our staff — they can help at the counter.
+      </p>
     </div>
   );
 }

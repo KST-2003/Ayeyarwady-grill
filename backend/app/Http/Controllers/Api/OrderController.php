@@ -13,6 +13,7 @@ use App\Models\Notification;
 use App\Models\Order;
 use App\Models\OrderStatusLog;
 use App\Support\SafeBroadcast;
+use App\Support\TableBill;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -37,6 +38,14 @@ class OrderController extends Controller
 
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 400);
+        }
+
+        // Once the bill has been asked for, the table is closing out — more
+        // orders would land on a check that is already printed.
+        if (TableBill::pending($request->input('tableId'))->exists()) {
+            return response()->json([
+                'error' => 'The bill has already been requested for this table. Please ask our staff to add more.',
+            ], 409);
         }
 
         $user = $request->user(); // resolved by the optional bearer-token check in routes

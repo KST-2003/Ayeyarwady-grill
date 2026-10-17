@@ -27,6 +27,11 @@ class OverviewController extends Controller
             'occupiedTables' => DiningTable::where('status', 'OCCUPIED')->count(),
             'totalTables' => DiningTable::count(),
             'totalStaff' => Staff::where('is_active', true)->count(),
+            'collectedToday' => (float) Payment::whereNotNull('order_id')->where('status', 'PAID')
+                ->whereDate('payment_date', now()->toDateString())->sum('amount'),
+            'tablesToCollect' => DiningTable::whereHas('orders', fn ($q) => $q->whereNotNull('bill_requested_at')
+                ->where('status', '!=', 'CANCELLED')
+                ->whereDoesntHave('payments', fn ($p) => $p->where('status', 'PAID')))->count(),
         ]);
     }
 
