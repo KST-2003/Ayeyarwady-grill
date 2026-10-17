@@ -52,8 +52,11 @@ class CustomerController extends Controller
             $bookings = $c->bookings->whereIn('status', ['CONFIRMED', 'COMPLETED']);
             $orders = $c->orders->where('status', '!=', 'CANCELLED');
 
-            $visitDates = $bookings->map(fn ($b) => $b->booking_date->toDateString())
-                ->merge($orders->map(fn ($o) => $o->created_at->toDateString()))
+            // toBase(): these are date strings, not models. An empty Eloquent
+            // collection (no bookings) would otherwise stay Eloquent after
+            // merge() and unique() would call getKey() on the strings.
+            $visitDates = $bookings->map(fn ($b) => $b->booking_date->toDateString())->toBase()
+                ->merge($orders->map(fn ($o) => $o->created_at->toDateString())->toBase())
                 ->unique()
                 ->sortDesc()
                 ->values();

@@ -43,4 +43,17 @@ class CustomerOrdersTest extends TestCase
 
         $this->getJson("/api/customers/{$c->id}/orders")->assertStatus(403);
     }
+
+    public function test_customer_list_handles_a_customer_with_orders_but_no_bookings(): void
+    {
+        $c = $this->customer('a@example.com');
+        Order::create(['customer_id' => $c->id, 'total_amount' => 1000, 'status' => 'COMPLETED']);
+
+        Sanctum::actingAs(Admin::create(['name' => 'Ada', 'email' => 'ada@example.com', 'password' => 'secret123']));
+
+        $rows = $this->getJson('/api/customers')->assertOk()->json();
+
+        $this->assertSame(1, $rows[0]['visitCount']);
+        $this->assertSame(1, $rows[0]['orderCount']);
+    }
 }
