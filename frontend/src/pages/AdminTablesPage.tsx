@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, FormEvent } from "react";
 import { Plus, QrCode, Users } from "lucide-react";
 import api from "../lib/api";
 import AdminSidebar from "../components/AdminSidebar";
+import { getStaffChannel } from "../lib/socket";
 
 interface Table {
   id: string;
@@ -34,6 +35,31 @@ export default function AdminTablesPage() {
 
   useEffect(() => {
     refresh();
+  }, []);
+
+  // Live status: the backend broadcasts every table change (an order claims
+  // it, staff free it, an admin edits it) on the staff-room channel. The
+  // payload has no section / QR relations, so merge only the changed fields
+  // into the row we already have, and reload if it is a table we don't know.
+  useEffect(() => {
+    const channel = getStaffChannel();
+    channel.listen(".table.status-changed", (updated: { id: string | number; status: string; capacity?: number }) => {
+      setTables((prev) => {
+        if (!prev) return prev;
+        if (!prev.some((t) => String(t.id) === String(updated.id))) {
+          refresh();
+          return prev;
+        }
+        return prev.map((t) =>
+          String(t.id) === String(updated.id)
+            ? { ...t, status: updated.status, capacity: updated.capacity ?? t.capacity }
+            : t
+        );
+      });
+    });
+    return () => {
+      channel.stopListening(".table.status-changed");
+    };
   }, []);
 
   const sections = useMemo(() => {
