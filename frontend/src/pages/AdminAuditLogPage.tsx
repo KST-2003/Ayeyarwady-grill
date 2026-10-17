@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 import api from "../lib/api";
 import AdminSidebar from "../components/AdminSidebar";
+import Pagination, { usePagination } from "../components/Pagination";
 
 interface AuditLogEntry {
   id: string;
@@ -36,6 +37,7 @@ function formatValue(json: string | null): string {
 
 export default function AdminAuditLogPage() {
   const [logs, setLogs] = useState<AuditLogEntry[] | null>(null);
+  const pager = usePagination(logs, 15);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -81,7 +83,7 @@ export default function AdminAuditLogPage() {
               </tr>
             </thead>
             <tbody>
-              {logs?.map((log) => (
+              {pager.pageItems?.map((log) => (
                 <tr key={log.id} className="border-t border-grill-brown/5">
                   <td className="px-6 py-4 font-medium text-grill-brown">{log.admin?.name ?? "—"}</td>
                   <td className="px-6 py-4">
@@ -136,6 +138,7 @@ export default function AdminAuditLogPage() {
               )}
             </tbody>
           </table>
+          <Pagination page={pager.page} pageCount={pager.pageCount} total={pager.total} pageSize={pager.pageSize} onChange={pager.setPage} />
         </div>
       </main>
     </div>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CalendarX, Upload } from "lucide-react";
 import api from "../lib/api";
+import Pagination, { usePagination } from "../components/Pagination";
 import CustomerSidebar from "../components/CustomerSidebar";
 import StatusBadge from "../components/StatusBadge";
 
@@ -84,6 +85,7 @@ function PaymentCell({ booking, onUpdated }: { booking: Booking; onUpdated: (pay
 
 export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<Booking[] | null>(null);
+  const pager = usePagination(bookings, 10);
 
   useEffect(() => {
     api.get("/bookings/mine").then((res) => setBookings(res.data));
@@ -120,7 +122,7 @@ export default function MyBookingsPage() {
               </tr>
             </thead>
             <tbody>
-              {bookings?.map((b) => (
+              {pager.pageItems?.map((b) => (
                 <tr key={b.id} className="border-t border-grill-brown/5 transition-colors hover:bg-grill-brown/[0.02]">
                   <td className="px-6 py-4 font-medium text-grill-brown">
                     {new Date(b.bookingDate).toLocaleDateString(undefined, {
@@ -164,6 +166,7 @@ export default function MyBookingsPage() {
               )}
             </tbody>
           </table>
+          <Pagination page={pager.page} pageCount={pager.pageCount} total={pager.total} pageSize={pager.pageSize} onChange={pager.setPage} />
         </div>
       </main>
     </div>

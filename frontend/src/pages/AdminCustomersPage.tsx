@@ -4,6 +4,7 @@ import api from "../lib/api";
 import AdminSidebar from "../components/AdminSidebar";
 import EditAccountModal from "../components/EditAccountModal";
 import StatusBadge from "../components/StatusBadge";
+import Pagination, { usePagination } from "../components/Pagination";
 
 interface CustomerRow {
   id: string;
@@ -33,6 +34,7 @@ interface CustomerOrder {
 // placed while logged in show up here — guest QR orders have no customer.
 function CustomerOrders({ customerId }: { customerId: string }) {
   const [orders, setOrders] = useState<CustomerOrder[] | null>(null);
+  const pager = usePagination(orders, 5);
 
   useEffect(() => {
     api
@@ -49,7 +51,7 @@ function CustomerOrders({ customerId }: { customerId: string }) {
       {orders === null && <p className="mt-2 text-xs text-grill-brown/40">Loading…</p>}
       {orders?.length === 0 && <p className="mt-2 text-xs text-grill-brown/40">No orders yet</p>}
       <div className="mt-2 space-y-2">
-        {orders?.map((o) => (
+        {pager.pageItems?.map((o) => (
           <div key={o.id} className="rounded-lg border border-grill-brown/10 bg-white px-3.5 py-2.5 text-xs">
             <div className="flex items-center justify-between gap-3">
               <p className="font-medium text-grill-brown">
@@ -76,6 +78,7 @@ function CustomerOrders({ customerId }: { customerId: string }) {
           </div>
         ))}
       </div>
+      <Pagination page={pager.page} pageCount={pager.pageCount} total={pager.total} pageSize={pager.pageSize} onChange={pager.setPage} flush />
     </div>
   );
 }
@@ -105,6 +108,8 @@ export default function AdminCustomersPage() {
       [c.name, c.email, c.phone ?? ""].some((v) => v.toLowerCase().includes(q))
     );
   }, [customers, query]);
+
+  const pager = usePagination(filtered, 10, query);
 
   const totalSpent = customers?.reduce((sum, c) => sum + c.totalSpent, 0) ?? 0;
   const totalVisits = customers?.reduce((sum, c) => sum + c.visitCount, 0) ?? 0;
@@ -162,7 +167,7 @@ export default function AdminCustomersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-grill-brown/5">
-              {filtered?.map((c) => {
+              {pager.pageItems?.map((c) => {
                 const open = openId === c.id;
                 return (
                   <Fragment key={c.id}>
@@ -241,6 +246,7 @@ export default function AdminCustomersPage() {
               )}
             </tbody>
           </table>
+          <Pagination page={pager.page} pageCount={pager.pageCount} total={pager.total} pageSize={pager.pageSize} onChange={pager.setPage} />
         </div>
       </main>
       {editing && (

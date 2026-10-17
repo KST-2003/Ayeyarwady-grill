@@ -3,6 +3,7 @@ import { LogIn, LogOut } from "lucide-react";
 import api from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import AdminSidebar from "../components/AdminSidebar";
+import Pagination, { usePagination } from "../components/Pagination";
 
 interface AttendanceRecord {
   id: string;
@@ -16,6 +17,7 @@ export default function AdminAttendancePage() {
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
   const [records, setRecords] = useState<AttendanceRecord[] | null>(null);
+  const pager = usePagination(records, 15);
   const [clocking, setClocking] = useState(false);
 
   function refresh() {
@@ -92,7 +94,7 @@ export default function AdminAttendancePage() {
               </tr>
             </thead>
             <tbody>
-              {records?.map((r) => (
+              {pager.pageItems?.map((r) => (
                 <tr key={r.id} className="border-t border-grill-brown/5">
                   {isAdmin && (
                     <td className="px-6 py-4 font-medium text-grill-brown">{r.staff?.name ?? "—"}</td>
@@ -135,6 +137,7 @@ export default function AdminAttendancePage() {
               )}
             </tbody>
           </table>
+          <Pagination page={pager.page} pageCount={pager.pageCount} total={pager.total} pageSize={pager.pageSize} onChange={pager.setPage} />
         </div>
       </main>
     </div>

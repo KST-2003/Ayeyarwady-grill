@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Check, X } from "lucide-react";
 import api from "../lib/api";
+import Pagination, { usePagination } from "../components/Pagination";
 import { getStaffChannel } from "../lib/socket";
 import { playAlarm } from "../lib/alarm";
 import AdminSidebar from "../components/AdminSidebar";
@@ -25,6 +26,7 @@ interface Booking {
 
 export default function StaffBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const pager = usePagination(bookings, 10);
   const [actingOn, setActingOn] = useState<string | null>(null);
 
   useEffect(() => {
@@ -88,7 +90,7 @@ export default function StaffBookingsPage() {
               </tr>
             </thead>
             <tbody>
-              {bookings.map((b) => {
+              {pager.pageItems?.map((b) => {
                 const payment = b.payments?.[0];
                 const canVerify = payment?.status === "PENDING" && payment.screenshotUrl;
                 return (
@@ -163,6 +165,7 @@ export default function StaffBookingsPage() {
               )}
             </tbody>
           </table>
+          <Pagination page={pager.page} pageCount={pager.pageCount} total={pager.total} pageSize={pager.pageSize} onChange={pager.setPage} />
         </div>
       </main>
     </div>

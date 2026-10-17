@@ -3,6 +3,7 @@ import { KeyRound, Mail, Phone, UserPlus } from "lucide-react";
 import api from "../lib/api";
 import AdminSidebar from "../components/AdminSidebar";
 import EditAccountModal from "../components/EditAccountModal";
+import Pagination, { usePagination } from "../components/Pagination";
 
 interface StaffMember {
   id: string;
@@ -19,6 +20,7 @@ interface Role {
 
 export default function AdminStaffPage() {
   const [staff, setStaff] = useState<StaffMember[] | null>(null);
+  const pager = usePagination(staff, 10);
   const [roles, setRoles] = useState<Role[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -126,7 +128,7 @@ export default function AdminStaffPage() {
         </form>
 
         <div className="mt-6 divide-y divide-grill-brown/5 rounded-2xl border border-grill-brown/10 bg-white shadow-sm">
-          {staff?.map((s) => (
+          {pager.pageItems?.map((s) => (
             <div key={s.id} className="flex items-center justify-between gap-4 px-6 py-4 text-sm">
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-grill-brown">{s.name}</p>
@@ -166,6 +168,7 @@ export default function AdminStaffPage() {
           {staff?.length === 0 && (
             <p className="px-6 py-16 text-center text-sm text-grill-brown/40">No staff accounts yet</p>
           )}
+          <Pagination page={pager.page} pageCount={pager.pageCount} total={pager.total} pageSize={pager.pageSize} onChange={pager.setPage} />
         </div>
       </main>
       {editing && (

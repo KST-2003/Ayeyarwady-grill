@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ReceiptText, UtensilsCrossed } from "lucide-react";
 import api from "../lib/api";
+import Pagination, { usePagination } from "../components/Pagination";
 import CustomerSidebar from "../components/CustomerSidebar";
 import StatusBadge from "../components/StatusBadge";
 
@@ -22,6 +23,7 @@ interface Order {
 
 export default function OrderHistoryPage() {
   const [orders, setOrders] = useState<Order[] | null>(null);
+  const pager = usePagination(orders, 6);
 
   useEffect(() => {
     api.get("/orders/mine").then((res) => setOrders(res.data));
@@ -39,7 +41,7 @@ export default function OrderHistoryPage() {
         <p className="mt-2 text-sm text-grill-brown/50">Everything you've ordered at Ayeyarwady Grill</p>
 
         <div className="mt-8 space-y-4">
-          {orders?.map((order) => (
+          {pager.pageItems?.map((order) => (
             <div
               key={order.id}
               className="rounded-2xl border border-grill-brown/10 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
@@ -94,6 +96,9 @@ export default function OrderHistoryPage() {
               Loading…
             </div>
           )}
+        </div>
+        <div className="mt-2">
+          <Pagination page={pager.page} pageCount={pager.pageCount} total={pager.total} pageSize={pager.pageSize} onChange={pager.setPage} flush />
         </div>
       </main>
     </div>
