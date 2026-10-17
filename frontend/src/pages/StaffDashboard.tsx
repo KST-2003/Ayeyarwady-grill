@@ -121,9 +121,12 @@ export default function StaffDashboard() {
             return (
               <div key={order.id} className="flex flex-col rounded-xl border border-grill-brown/10 bg-white p-4">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-grill-brown">
-                    {order.table ? `Table ${order.table.tableNumber}` : "Walk-in"}
-                  </span>
+                  <div>
+                    <span className="font-medium text-grill-brown">
+                      {order.table ? `Table ${order.table.tableNumber}` : "Walk-in"}
+                    </span>
+                    <span className="ml-2 text-xs text-grill-brown/50">Order #{order.id}</span>
+                  </div>
                   <StatusBadge status={order.status} />
                 </div>
 
