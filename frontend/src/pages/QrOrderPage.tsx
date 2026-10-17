@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Clock, Flame, Minus, Plus, ShoppingBag, UtensilsCrossed, X } from "lucide-react";
 import api from "../lib/api";
 import StatusBadge from "../components/StatusBadge";
+import { useAuth } from "../context/AuthContext";
 
 interface MenuItem {
   id: string;
@@ -57,7 +58,22 @@ function addStoredOrderId(tableNumber: string, id: string) {
   }
 }
 
+// "Continue as guest" is remembered for this table for the rest of the
+// browser session, so the choice isn't asked again after every reload.
+function guestKey(tableNumber: string) {
+  return `qr-guest-${tableNumber}`;
+}
+function isGuestChosen(tableNumber: string | null): boolean {
+  if (!tableNumber) return false;
+  try {
+    return sessionStorage.getItem(guestKey(tableNumber)) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export default function QrOrderPage() {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const tableNumber = searchParams.get("table");
   const token = searchParams.get("token");
@@ -71,6 +87,7 @@ export default function QrOrderPage() {
   const [placing, setPlacing] = useState(false);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [guestChosen, setGuestChosen] = useState(() => isGuestChosen(searchParams.get("table")));
 
   useEffect(() => {
     api.get("/menu").then((res) => {
@@ -153,6 +170,54 @@ export default function QrOrderPage() {
     );
   }
 
+  // Staff/admin placing an order for a table skip the question.
+  const needsChoice = !user && !guestChosen && tableId !== null;
+  if (needsChoice) {
+    const here = encodeURIComponent(`/order?${searchParams.toString()}`);
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-cream px-5">
+        <div className="w-full max-w-sm rounded-2xl border border-grill-brown/10 bg-white p-6 text-center shadow-sm">
+          <Flame className="mx-auto h-7 w-7 text-grill-orange" strokeWidth={1.75} />
+          <h1 className="mt-2 font-display text-xl text-grill-brown">Ayeyarwady Grill</h1>
+          <p className="mt-1 text-sm text-grill-brown/60">Table {tableNumber}</p>
+
+          <Link
+            to={`/login?redirect=${here}`}
+            className="mt-6 block w-full rounded-md bg-grill-orange py-3 text-sm font-medium text-white hover:bg-grill-orange-dark"
+          >
+            Log in to order
+          </Link>
+          <p className="mt-2 text-xs text-grill-brown/50">
+            Members keep their order history.{" "}
+            <Link to={`/register?redirect=${here}`} className="font-medium text-grill-orange-dark hover:underline">
+              Create an account
+            </Link>
+          </p>
+
+          <div className="my-5 flex items-center gap-3 text-xs text-grill-brown/30">
+            <span className="h-px flex-1 bg-grill-brown/10" />
+            or
+            <span className="h-px flex-1 bg-grill-brown/10" />
+          </div>
+
+          <button
+            onClick={() => {
+              try {
+                sessionStorage.setItem(guestKey(tableNumber), "1");
+              } catch {
+                // sessionStorage unavailable — the choice just won't survive a reload
+              }
+              setGuestChosen(true);
+            }}
+            className="w-full rounded-md border border-grill-brown/20 py-3 text-sm font-medium text-grill-brown hover:bg-grill-brown/5"
+          >
+            Continue as guest
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (receipt) {
     return (
       <>
@@ -176,6 +241,9 @@ export default function QrOrderPage() {
           <div>
             <p className="text-xs uppercase tracking-wide text-white/50">Ayeyarwady Grill · Table {tableNumber}</p>
             <h1 className="font-display text-xl">Menu</h1>
+            <p className="text-[11px] text-white/50">
+              {user?.role === "CUSTOMER" ? `Ordering as ${user.name}` : user ? `Taking order as ${user.name}` : "Ordering as guest"}
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -382,6 +450,7 @@ function HistoryDrawer({
   tableNumber: string;
   onClose: () => void;
 }) {
+  const { user } = useAuth();
   const [orders, setOrders] = useState<Receipt[] | null>(null);
 
   useEffect(() => {
@@ -410,6 +479,14 @@ function HistoryDrawer({
         </div>
 
         <div className="divide-y divide-grill-brown/5 px-5 pb-6">
+          {user?.role === "CUSTOMER" && (
+            <Link
+              to="/dashboard/orders"
+              className="block py-3 text-center text-xs font-medium text-grill-orange-dark hover:underline"
+            >
+              See all your past orders
+            </Link>
+          )}
           {orders === null && (
             <p className="py-10 text-center text-sm text-grill-brown/40">Loading…</p>
           )}

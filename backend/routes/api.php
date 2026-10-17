@@ -66,6 +66,7 @@ Route::middleware(['auth:sanctum', 'role:staff,admin'])->group(function () {
 
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/customers', [CustomerController::class, 'index']);
+    Route::get('/customers/{id}/orders', [CustomerController::class, 'orders']);
     Route::patch('/customers/{id}', [CustomerController::class, 'update']);
 });
 

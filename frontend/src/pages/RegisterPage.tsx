@@ -1,10 +1,13 @@
 import { useState, FormEvent } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { safeRedirect } from "./LoginPage";
 
 export default function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = safeRedirect(searchParams.get("redirect"));
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -16,7 +19,7 @@ export default function RegisterPage() {
     setError("");
     try {
       await register(name, email, password, phone);
-      navigate("/dashboard");
+      navigate(redirect ?? "/dashboard");
     } catch {
       setError("Could not create account — that email may already be registered.");
     }
@@ -80,7 +83,7 @@ export default function RegisterPage() {
 
         <p className="mt-6 text-center text-sm text-grill-brown/60">
           Already have an account?{" "}
-          <Link to="/login" className="text-grill-orange hover:underline">
+          <Link to={redirect ? `/login?redirect=${encodeURIComponent(redirect)}` : "/login"} className="text-grill-orange hover:underline">
             Sign in
           </Link>
         </p>

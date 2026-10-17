@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, KeyRound, Search } from "lucide-react";
 import api from "../lib/api";
 import AdminSidebar from "../components/AdminSidebar";
 import EditAccountModal from "../components/EditAccountModal";
+import StatusBadge from "../components/StatusBadge";
 
 interface CustomerRow {
   id: string;
@@ -17,6 +18,66 @@ interface CustomerRow {
   totalSpent: number;
   lastVisit: string | null;
   visitDates: string[];
+}
+
+interface CustomerOrder {
+  id: string;
+  status: string;
+  totalAmount: number | string;
+  createdAt: string;
+  table?: { tableNumber: number } | null;
+  items: { id: string; quantity: number; item: { name: string } }[];
+}
+
+// One customer's past orders, fetched when their row is opened. Only orders
+// placed while logged in show up here — guest QR orders have no customer.
+function CustomerOrders({ customerId }: { customerId: string }) {
+  const [orders, setOrders] = useState<CustomerOrder[] | null>(null);
+
+  useEffect(() => {
+    api
+      .get(`/customers/${customerId}/orders`)
+      .then((res) => setOrders(res.data))
+      .catch(() => setOrders([]));
+  }, [customerId]);
+
+  return (
+    <div className="mt-4">
+      <p className="text-xs font-medium text-grill-brown/60">
+        Order history{orders ? ` (${orders.length})` : ""}
+      </p>
+      {orders === null && <p className="mt-2 text-xs text-grill-brown/40">Loading…</p>}
+      {orders?.length === 0 && <p className="mt-2 text-xs text-grill-brown/40">No orders yet</p>}
+      <div className="mt-2 space-y-2">
+        {orders?.map((o) => (
+          <div key={o.id} className="rounded-lg border border-grill-brown/10 bg-white px-3.5 py-2.5 text-xs">
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-medium text-grill-brown">
+                Order #{o.id}
+                <span className="ml-2 font-normal text-grill-brown/50">
+                  {o.table ? `Table ${o.table.tableNumber} · ` : ""}
+                  {new Date(o.createdAt).toLocaleString(undefined, {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </p>
+              <div className="flex items-center gap-3">
+                <StatusBadge status={o.status} />
+                <span className="font-medium text-grill-brown">{Number(o.totalAmount).toLocaleString()} MMK</span>
+              </div>
+            </div>
+            <p className="mt-1 text-grill-brown/60">
+              {o.items.map((l) => `${l.quantity}× ${l.item.name}`).join(", ")}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 const fmtDate = (d: string | null) =>
@@ -164,6 +225,7 @@ export default function AdminCustomersPage() {
                           ) : (
                             <p className="mt-2 text-xs text-grill-brown/40">No visits yet</p>
                           )}
+                          <CustomerOrders customerId={c.id} />
                         </td>
                       </tr>
                     )}

@@ -25,6 +25,7 @@ interface Order {
   totalAmount: number;
   isWalkin: boolean;
   table?: { tableNumber: number };
+  customer?: { name: string } | null;
   items: OrderItem[];
 }
 
@@ -126,6 +127,17 @@ export default function StaffDashboard() {
                       {order.table ? `Table ${order.table.tableNumber}` : "Walk-in"}
                     </span>
                     <span className="ml-2 text-xs text-grill-brown/50">Order #{order.id}</span>
+                    <p className="mt-1">
+                      {order.customer ? (
+                        <span className="inline-flex items-center rounded-full bg-grill-orange/10 px-2 py-0.5 text-[11px] font-medium text-grill-orange-dark">
+                          {order.customer.name}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full bg-grill-brown/5 px-2 py-0.5 text-[11px] font-medium text-grill-brown/50">
+                          Guest
+                        </span>
+                      )}
+                    </p>
                   </div>
                   <StatusBadge status={order.status} />
                 </div>

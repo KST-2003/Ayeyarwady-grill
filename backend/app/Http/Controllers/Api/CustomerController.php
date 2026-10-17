@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\Payment;
 use App\Support\AuditLogger;
 use Illuminate\Http\Request;
@@ -77,6 +78,21 @@ class CustomerController extends Controller
         });
 
         return response()->json($rows->values());
+    }
+
+    // GET /api/customers/{id}/orders — admin only: one customer's order history,
+    // newest first. Only orders placed while logged in carry a customer_id;
+    // guest QR orders can't be attributed to anyone.
+    public function orders($id)
+    {
+        $customer = Customer::findOrFail($id);
+
+        $orders = Order::where('customer_id', $customer->id)
+            ->with(['items.item', 'table'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json($orders);
     }
 
     // PATCH /api/customers/{id} — admin only: fix contact details, reset

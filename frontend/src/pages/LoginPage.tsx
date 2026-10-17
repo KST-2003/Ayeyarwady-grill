@@ -1,5 +1,5 @@
 import { useState, FormEvent } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth, Role } from "../context/AuthContext";
 
 // Seeded demo accounts (see DatabaseSeeder) — shown on the login page so
@@ -10,9 +10,17 @@ const DEMO_CREDENTIALS: Record<Role, { email: string; password: string }> = {
   ADMIN: { email: "admin@ayeyarwadygrill.com", password: "password123" },
 };
 
+// Only same-site paths — never follow an arbitrary URL from the query string.
+export function safeRedirect(value: string | null): string | null {
+  return value && value.startsWith("/") && !value.startsWith("//") ? value : null;
+}
+
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Set when the QR order page sends a customer here: come back to the menu.
+  const redirect = safeRedirect(searchParams.get("redirect"));
   const [role, setRole] = useState<Role>("CUSTOMER");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,7 +37,7 @@ export default function LoginPage() {
     setError("");
     try {
       await login(email, password, role);
-      navigate(role === "CUSTOMER" ? "/dashboard" : "/staff");
+      navigate(role === "CUSTOMER" ? redirect ?? "/dashboard" : "/staff");
     } catch {
       setError("Invalid email or password");
     }
@@ -105,7 +113,7 @@ export default function LoginPage() {
 
         <p className="mt-6 text-center text-sm text-grill-brown/60">
           New customer?{" "}
-          <Link to="/register" className="text-grill-orange hover:underline">
+          <Link to={redirect ? `/register?redirect=${encodeURIComponent(redirect)}` : "/register"} className="text-grill-orange hover:underline">
             Create an account
           </Link>
         </p>
