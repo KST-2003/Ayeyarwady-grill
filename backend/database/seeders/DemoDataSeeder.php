@@ -186,7 +186,7 @@ class DemoDataSeeder extends Seeder
         $indoor = TableSection::firstOrCreate(['section_name' => 'Indoor'], ['description' => 'Air-conditioned indoor seating']);
         $river = TableSection::firstOrCreate(['section_name' => 'Riverfront'], ['description' => 'Tables facing the Yangon River']);
 
-        foreach (range(1, 20) as $n) {
+        foreach (range(1, 35) as $n) {
             DiningTable::firstOrCreate(
                 ['table_number' => $n],
                 ['capacity' => [2, 4, 4, 6][$n % 4], 'section_id' => $n <= 10 ? $indoor->id : $river->id]
