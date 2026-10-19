@@ -24,6 +24,7 @@ interface Overview {
 interface CollectedPayment {
   paidAt: string;
   tableNumber: number | null;
+  customerName: string;
   method: string | null;
   orderIds: (string | number)[];
   amount: number;
@@ -306,6 +307,7 @@ export default function AdminOverviewPage() {
             <thead className="border-y border-grill-brown/10 text-xs uppercase tracking-wider text-grill-brown/40">
               <tr>
                 <th className="px-5 py-3 font-medium">Date</th>
+                <th className="px-3 py-3 font-medium">Name</th>
                 <th className="px-3 py-3 font-medium">Table</th>
                 <th className="px-3 py-3 font-medium">Orders</th>
                 <th className="px-3 py-3 font-medium">Method</th>
@@ -324,6 +326,7 @@ export default function AdminOverviewPage() {
                       minute: "2-digit",
                     })}
                   </td>
+                  <td className="px-3 py-3 text-grill-brown">{p.customerName}</td>
                   <td className="px-3 py-3 text-grill-brown">{p.tableNumber ?? "—"}</td>
                   <td className="px-3 py-3 text-grill-brown/60">{p.orderIds.map((id) => `#${id}`).join(", ")}</td>
                   <td className="px-3 py-3 text-grill-brown/70">{p.method ?? "—"}</td>
@@ -332,14 +335,14 @@ export default function AdminOverviewPage() {
               ))}
               {payments?.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-10 text-center text-sm text-grill-brown/40">
+                  <td colSpan={6} className="py-10 text-center text-sm text-grill-brown/40">
                     No payments collected yet
                   </td>
                 </tr>
               )}
               {payments === null && (
                 <tr>
-                  <td colSpan={5} className="py-10 text-center text-sm text-grill-brown/40">
+                  <td colSpan={6} className="py-10 text-center text-sm text-grill-brown/40">
                     Loading…
                   </td>
                 </tr>

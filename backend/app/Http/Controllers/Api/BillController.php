@@ -168,7 +168,7 @@ class BillController extends Controller
     {
         $rows = Payment::whereNotNull('order_id')
             ->where('status', 'PAID')
-            ->with(['method', 'order.table'])
+            ->with(['method', 'order.table', 'order.customer'])
             ->orderByDesc('payment_date')
             ->limit(500)
             ->get()
@@ -176,6 +176,7 @@ class BillController extends Controller
             ->map(fn ($group) => [
                 'paidAt' => $group->first()->payment_date,
                 'tableNumber' => $group->first()->order->table?->table_number,
+                'customerName' => $group->first()->order->customer?->name ?? 'Guest',
                 'method' => $group->first()->method?->method_name,
                 'orderIds' => $group->pluck('order_id')->values()->all(),
                 'amount' => (float) $group->sum('amount'),
