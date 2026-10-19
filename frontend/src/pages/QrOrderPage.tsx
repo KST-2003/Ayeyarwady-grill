@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Clock, Flame, Minus, Plus, Printer, Receipt, ShoppingBag, UtensilsCrossed, X } from "lucide-react";
+import { Clock, Flame, Minus, Plus, Receipt, ShoppingBag, UtensilsCrossed, X } from "lucide-react";
 import api from "../lib/api";
 import StatusBadge from "../components/StatusBadge";
 import { useAuth } from "../context/AuthContext";
@@ -735,14 +735,7 @@ function BillView({ bill, tableNumber, token }: { bill: Bill; tableNumber: strin
           )
         }
       />
-      <button
-        onClick={() => window.print()}
-        className="mt-6 flex w-full max-w-sm items-center justify-center gap-1.5 rounded-md bg-grill-orange py-3 text-sm font-medium text-white hover:bg-grill-orange-dark print:hidden"
-      >
-        <Printer className="h-4 w-4" strokeWidth={1.75} />
-        Print receipt
-      </button>
-      <p className="mt-3 max-w-sm text-center text-xs text-grill-brown/40 print:hidden">
+      <p className="mt-6 max-w-sm text-center text-xs text-grill-brown/40 print:hidden">
         Need to change something? Ask our staff — they can help at the counter.
       </p>
     </div>
